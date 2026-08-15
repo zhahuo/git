@@ -30,6 +30,7 @@ class AgentConfig:
     dry_run: bool = True
     enabled_modules: tuple[str, ...] = (
         "brain",
+        "console",
         "memory_service",
         "emotion_service",
         "web_service",
@@ -40,6 +41,7 @@ class AgentConfig:
 
     @classmethod
     def load(cls, path: Path | None = None) -> "AgentConfig":
+        cls._load_dotenv(BASE_DIR / ".env")
         path = path or Path("config.json")
         cfg = cls(
             name=_env("AGENT_NAME", "小忆"),
@@ -64,6 +66,7 @@ class AgentConfig:
                 )
                 or (
                     "brain",
+                    "console",
                     "memory_service",
                     "emotion_service",
                     "web_service",
@@ -90,3 +93,14 @@ class AgentConfig:
                     setattr(cfg, key, value)
         cfg.data_dir.mkdir(parents=True, exist_ok=True)
         return cfg
+
+    @staticmethod
+    def _load_dotenv(dotenv_path: Path) -> None:
+        if not dotenv_path.exists():
+            return
+        for line in dotenv_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
