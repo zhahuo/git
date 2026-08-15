@@ -98,7 +98,8 @@ class AgentBrain:
         ]
         try:
             reply = await self._run_tool_loop(messages, user_key)
-        except LLMError:
+        except LLMError as exc:
+            print(f"[模型接口] {exc}")
             reply = self._fallback_reply(user_key, message)
 
         self.memory.save_exchange(user_key, "assistant", reply)
