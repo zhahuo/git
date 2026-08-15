@@ -42,7 +42,11 @@ def main(argv: list[str] | None = None) -> int:
     os.environ["GIT_INDEX_FILE"] = str(index_file)
     run_git(repo, ["read-tree", "--empty"])
     run_git(repo, ["add", subdir])
-    subtree = run_git(repo, ["write-tree"]).strip().decode()
+    staged_root = run_git(repo, ["write-tree"]).strip().decode()
+    subtree_entry = run_git(repo, ["ls-tree", staged_root, subdir]).strip()
+    if not subtree_entry:
+        raise RuntimeError(f"没有找到子目录 {subdir} 的树对象")
+    subtree = subtree_entry.split(b"\t")[0].split(b" ")[2].decode()
 
     root_tree = run_git(repo, ["rev-parse", "origin/main^{tree}"]).strip()
     ls = run_git(repo, ["ls-tree", "-z", root_tree])
