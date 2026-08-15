@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="京东 E 卡">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e11d48"/>
+      <stop offset="1" stop-color="#9f1239"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="140" cy="120" r="100" fill="#ffffff" opacity="0.08"/>
+  <g transform="translate(420 300)">
+    <rect x="-150" y="-40" width="300" height="190" rx="18" fill="#ffffff" opacity="0.96"/>
+    <path d="M-150-40l60 80h180l60-80z" fill="#be123c"/>
+    <path d="M-90-40v80M90-40v80" stroke="#ffffff" stroke-width="10" opacity="0.9"/>
+    <circle cx="-40" cy="70" r="30" fill="#e11d48"/>
+    <circle cx="40" cy="70" r="30" fill="#e11d48"/>
+  </g>
+  <text x="60" y="520" font-family="Arial, sans-serif" font-size="52" font-weight="800" fill="#ffffff" opacity="0.9">JD</text>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="虚拟卡密">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#134e4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="150" cy="140" r="110" fill="#ffffff" opacity="0.08"/>
+  <g transform="translate(400 300)">
+    <rect x="-190" y="-120" width="380" height="240" rx="22" fill="#ffffff" opacity="0.96"/>
+    <rect x="-150" y="-80" width="300" height="14" rx="7" fill="#0f766e"/>
+    <rect x="-150" y="-44" width="96" height="64" rx="8" fill="#f59e0b"/>
+    <text x="0" y="72" text-anchor="middle" font-family="ui-monospace, monospace" font-size="34" font-weight="700" fill="#134e4a">XXXX-XXXX-XXXX-XXXX</text>
+  </g>
+  <text x="60" y="520" font-family="Arial, sans-serif" font-size="40" font-weight="700" fill="#ffffff" opacity="0.9">VIRTUAL CARD</text>
+</svg>

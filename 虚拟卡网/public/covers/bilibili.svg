@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="B 站大会员">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#1e40af"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect x="210" y="130" width="380" height="330" rx="34" fill="#ffffff" opacity="0.12"/>
+  <rect x="250" y="180" width="300" height="230" rx="20" fill="#ffffff" opacity="0.96"/>
+  <path d="M360 250l140 90l-140 90z" fill="#1d4ed8"/>
+  <path d="M250 180l-52-64M550 180l52-64" stroke="#ffffff" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <text x="60" y="520" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff" opacity="0.9">BILIBILI</text>
+</svg>

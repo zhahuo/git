@@ -1,0 +1,244 @@
+/* 小小CSGO V3 布局模块样式
+ * 独立交付，随 src/layout.js 一起接入。
+ * 只负责布局与表现，不改动现有 HUD 逻辑。
+ */
+
+:root {
+  --v3-hud-gap: 26px;
+  --v3-map-size: 172px;
+  --v3-boot-progress: 0;
+}
+
+/* HUD 从绝对定位改为三栏网格，四角统一按视口边距 + 安全区排布 */
+html.v3-layout #hud {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(200px, 360px) minmax(190px, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px 16px;
+  padding:
+    calc(var(--v3-hud-gap) + env(safe-area-inset-top, 0px))
+    calc(var(--v3-hud-gap) + env(safe-area-inset-right, 0px))
+    calc(var(--v3-hud-gap) + env(safe-area-inset-bottom, 0px))
+    calc(var(--v3-hud-gap) + env(safe-area-inset-left, 0px));
+}
+
+html.v3-layout #mapWrap {
+  position: static;
+  grid-area: 1 / 1;
+  justify-self: start;
+}
+
+html.v3-layout #top {
+  position: static;
+  grid-area: 1 / 2;
+  justify-self: center;
+  transform: none;
+}
+
+html.v3-layout #feed {
+  position: static;
+  grid-area: 1 / 3;
+  justify-self: end;
+}
+
+html.v3-layout #comms {
+  position: static;
+  grid-area: 2 / 1;
+  align-self: end;
+}
+
+html.v3-layout #slots {
+  position: static;
+  grid-area: 2 / 3;
+  align-self: end;
+}
+
+html.v3-layout #vitals {
+  position: static;
+  grid-area: 3 / 1;
+  align-self: end;
+}
+
+html.v3-layout #ammo {
+  position: static;
+  grid-area: 3 / 3;
+  align-self: end;
+}
+
+/* HUD 尺寸随窗口收敛，避免小窗下相互挤压 */
+html.v3-layout #minimap {
+  width: var(--v3-map-size);
+  height: var(--v3-map-size);
+}
+
+html.v3-layout #magNum {
+  font-size: clamp(30px, 4.2vmin, 44px);
+}
+
+html.v3-layout #hpNum {
+  font-size: clamp(22px, 3.1vmin, 30px);
+}
+
+html.v3-layout #vitals {
+  width: min(250px, 34vw);
+}
+
+html.v3-layout #ammo {
+  min-width: min(250px, 32vw);
+}
+
+html.v3-layout #comms {
+  max-width: min(360px, 42vw);
+}
+
+/* 普通小窗：整体收紧 */
+html.v3-layout-compact {
+  --v3-hud-gap: 18px;
+  --v3-map-size: 150px;
+}
+
+html.v3-layout-compact #hud {
+  grid-template-columns: minmax(160px, 1fr) minmax(180px, 320px) minmax(160px, 1fr);
+  gap: 8px 12px;
+}
+
+html.v3-layout-compact #magNum {
+  font-size: clamp(27px, 3.8vmin, 38px);
+}
+
+/* 窄窗/矮窗：密集模式 */
+html.v3-layout-dense {
+  --v3-hud-gap: 12px;
+  --v3-map-size: 126px;
+}
+
+html.v3-layout-dense #hud {
+  grid-template-columns: minmax(140px, 1fr) minmax(150px, 280px) minmax(140px, 1fr);
+  gap: 8px 10px;
+}
+
+html.v3-layout-compact #mapWrap,
+html.v3-layout-dense #mapWrap {
+  padding: 4px;
+}
+
+html.v3-layout-dense #ammo {
+  min-width: 0;
+}
+
+html.v3-layout-dense #vitals {
+  width: min(230px, 34vw);
+}
+
+html.v3-layout-dense #magNum {
+  font-size: clamp(24px, 3.3vmin, 33px);
+}
+
+html.v3-layout-dense #hpNum {
+  font-size: clamp(19px, 2.6vmin, 25px);
+}
+
+html.v3-layout-dense #mapWrap .lbl {
+  font-size: 8px;
+  letter-spacing: .14em;
+}
+
+html.v3-layout-dense #slots {
+  gap: 3px;
+}
+
+html.v3-layout-dense .slot {
+  padding: 3px 7px;
+  font-size: 9px;
+}
+
+html.v3-layout-dense .slot span {
+  max-width: 104px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 超宽屏：把两侧信息拉得更开 */
+html.v3-layout-ultrawide {
+  --v3-hud-gap: 34px;
+}
+
+html.v3-layout-ultrawide #hud {
+  grid-template-columns: minmax(200px, 1fr) minmax(220px, 460px) minmax(200px, 1fr);
+}
+
+html.v3-layout-ultrawide #comms {
+  max-width: 420px;
+}
+
+/* 开始页与角标也跟随安全区 */
+html.v3-layout #startScreen {
+  padding-top: calc(clamp(14px, 3.5vh, 40px) + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(clamp(14px, 3.5vh, 40px) + env(safe-area-inset-bottom, 0px));
+}
+
+html.v3-layout .slug.tl {
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: calc(20px + env(safe-area-inset-left, 0px));
+}
+
+html.v3-layout .slug.tr {
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
+}
+
+html.v3-layout .slug.br {
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
+}
+
+/* 加载进度条，进度由 layout.js 写入 --v3-boot-progress */
+html.v3-layout #boot {
+  flex-direction: column;
+  gap: 18px;
+}
+
+html.v3-layout #v3BootBar {
+  width: min(320px, 64vw);
+  height: 3px;
+  background: rgba(223, 230, 236, .12);
+  overflow: hidden;
+}
+
+html.v3-layout #v3BootBar::before {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(var(--v3-boot-progress, 0));
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--amber), #fff);
+  transition: transform .18s ease-out;
+}
+
+/* 低配设备：去掉高开销的模糊与过渡 */
+html.v3-layout-lowend .panel {
+  backdrop-filter: none;
+}
+
+html.v3-layout-lowend #hud {
+  transition: none;
+}
+
+html.v3-layout-lowend .cta {
+  animation: none;
+}
+
+/* 跟随系统“减少动态效果”偏好 */
+@media (prefers-reduced-motion: reduce) {
+  html.v3-layout .cta,
+  html.v3-layout .kf,
+  html.v3-layout .cm,
+  html.v3-layout #timer.warn,
+  html.v3-layout #reloadHint.blink {
+    animation: none !important;
+    transition: none !important;
+  }
+}

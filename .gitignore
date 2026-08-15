@@ -1,0 +1,20 @@
+﻿# Python
+**/.venv/
+**/__pycache__/
+**/*.pyc
+
+# Node
+**/node_modules/
+**/dist/
+**/.next/
+
+# Runtime data
+**/*.log
+**/logs/
+**/one-api.db
+**/*.db-journal
+**/warmup*
+
+# OS
+Thumbs.db
+.DS_Store

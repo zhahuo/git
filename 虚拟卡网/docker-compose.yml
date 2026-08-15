@@ -1,0 +1,16 @@
+services:
+  virtual-card-mall:
+    build: .
+    image: virtual-card-mall:latest
+    container_name: virtual-card-mall
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - virtual-card-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  virtual-card-data:

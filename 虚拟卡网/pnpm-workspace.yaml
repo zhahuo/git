@@ -1,0 +1,5 @@
+allowBuilds:
+  sharp: false
+confirmModulesPurge: false
+verifyDepsBeforeRun: false
+packageImportMethod: copy

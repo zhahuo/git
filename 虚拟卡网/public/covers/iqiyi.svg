@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="爱奇艺黄金 VIP">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16a34a"/>
+      <stop offset="1" stop-color="#14532d"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <circle cx="660" cy="130" r="130" fill="#ffffff" opacity="0.08"/>
+  <rect x="300" y="150" width="200" height="300" rx="28" fill="#ffffff" opacity="0.96"/>
+  <path d="M365 215l125 85l-125 85z" fill="#16a34a"/>
+  <text x="50" y="500" font-family="Arial, sans-serif" font-size="40" font-weight="700" fill="#ffffff" opacity="0.9">iQIYI</text>
+</svg>

@@ -1,0 +1,13 @@
+node_modules
+.pnpm-store
+.next
+.next-*
+out
+data/*.db
+data/*.db-wal
+data/*.db-shm
+.env*
+*.log
+*.tsbuildinfo
+playwright-report
+test-results
