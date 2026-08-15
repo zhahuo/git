@@ -29,5 +29,9 @@ class ConsoleChannel(Channel):
                     for item in items:
                         print(f"- [{item.kind}] {item.content}")
                 continue
-            reply = self.brain.respond("console", line)
+            try:
+                reply = self.brain.respond("console", line)
+            except Exception as exc:
+                print(f"{name}：出错了：{exc}")
+                continue
             print(f"{name}：{reply}")

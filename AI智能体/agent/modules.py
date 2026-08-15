@@ -38,6 +38,8 @@ class BrainModule(Module):
         if event.get("type") != "user_message":
             return
         payload = event.get("payload") or {}
+        if payload.get("source") == "brain":
+            return
         message = (payload.get("message") or "").strip()
         if message:
             await self.brain.handle_message(payload.get("user_key") or "_agent", message)
@@ -79,6 +81,8 @@ class _ChannelModule(Module):
     def _run(self) -> None:
         try:
             self._run_channel()
+        except Exception as exc:
+            print(f"[{self.name}] 渠道运行出错：{exc}")
         finally:
             if self._loop is not None and self._done is not None:
                 self._loop.call_soon_threadsafe(self._done.set)

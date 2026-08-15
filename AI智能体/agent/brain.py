@@ -74,6 +74,7 @@ class AgentBrain:
                 "message": message,
                 "role": "user",
                 "persisted": True,
+                "source": "brain",
                 "valence": self.emotion.valence,
                 "arousal": self.emotion.arousal,
                 "dominance": self.emotion.dominance,
