@@ -1,0 +1,12 @@
+[project]
+name = "ai-agent"
+version = "0.1.0"
+description = "一个有记忆、情绪、联网和平台接入能力的 AI 智能体"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ai-agent = "agent.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,10 @@
+{
+  "name": "小忆",
+  "persona": "温柔、好奇、有一点幽默，尊重每个人。",
+  "model": "gpt-4o-mini",
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "",
+  "search_provider": "dry_run",
+  "search_api_key": "",
+  "dry_run": true
+}
