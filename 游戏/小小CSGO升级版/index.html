@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><link rel="icon" href="data:,">
 <title>小小CSGO — Warehouse District</title>
 <meta name="description" content="十名敌兵占据一座集装箱场，你只有三分钟。整个游戏——世界、武器、AI 与音频——是一个约 290 KB 的 HTML 文件，无需构建，也没有外部素材。">
 <meta name="author" content="Prasenjit">
@@ -294,7 +294,19 @@
   #boot.hide{display:none;}
   #err{position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow:auto;z-index:99;
     background:rgba(70,0,0,.94);color:#ffd9d5;font:11px/1.55 ui-monospace,Consolas,monospace;padding:10px 14px;display:none;white-space:pre-wrap;}
-</style>
+
+#pause .pause-panel{display:flex;flex-direction:column;gap:12px;align-items:center;background:rgba(8,10,12,.94);padding:30px 36px;border:1px solid rgba(255,179,64,.30);border-radius:8px;}
+.pause-btn{min-width:230px;padding:12px 18px;font:inherit;font-weight:700;letter-spacing:.12em;color:var(--hud);background:rgba(255,179,64,.10);border:1px solid rgba(255,179,64,.35);cursor:pointer;}
+.pause-btn:hover{background:rgba(255,179,64,.24);}
+#settingsPanel{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,7,9,.88);z-index:60;}
+#settingsPanel.on{display:flex;}
+.settings-panel-inner{width:min(500px,92vw);max-height:86vh;overflow:auto;background:#0c1114;border:1px solid rgba(255,179,64,.30);border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:12px;color:var(--hud);}
+.settings-panel-inner label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;letter-spacing:.06em;}
+.settings-panel-inner input[type=range]{width:220px;}
+.settings-panel-inner select{background:#101519;color:var(--hud);border:1px solid rgba(223,230,236,.25);padding:4px 8px;}
+.settings-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
+.settings-actions button{background:rgba(255,179,64,.12);border:1px solid rgba(255,179,64,.35);color:var(--hud);padding:8px 14px;cursor:pointer;}
+.settings-title{font-size:18px;font-weight:800;letter-spacing:.2em;margin-bottom:4px;}</style>
 <link rel="stylesheet" href="src/layout.css">
 </head>
 <body>
@@ -414,6 +426,9 @@
 <script src="src/layout.js"></script>
 <script src="src/i18n.js"></script>
 <script src="src/lang/zh.js"></script>
+<script src="src/settings.js"></script>
+<script src="src/quality.js"></script>
+<script src="src/pause.js"></script>
 <script>
 "use strict";
 /* V3 集成：地图选择（?map=id，默认中文、默认 sector7）与全局数据入口 */
@@ -515,7 +530,7 @@ const SFX = (function(){
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value=-14; comp.knee.value=24; comp.ratio.value=9;
     comp.attack.value=0.003; comp.release.value=0.22;
-    master = ctx.createGain(); master.gain.value = 0.85;
+    master = ctx.createGain(); master.gain.value = 0.85 * (window.SettingsStore ? SettingsStore.get().volume : 1); window.__masterGain = master;
     master.connect(comp); comp.connect(ctx.destination);
 
     const len = ctx.sampleRate*2;
@@ -770,10 +785,12 @@ const SFX = (function(){
    2. RENDERER / SCENE / POST FX
    ========================================================================= */
 const canvas   = document.getElementById('c');
+if (window.SettingsStore) SettingsStore.init();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, powerPreference:'high-performance', stencil:false });
 const DPR = Math.min(window.devicePixelRatio||1, 1.5);
 renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight);
+window.__gameRenderer = renderer; if (window.applyQuality) applyQuality({ renderer });
 renderer.autoClear = false;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1011,6 +1028,8 @@ const compMat = postMat(`
     time:{value:0}, bloom:{value:0.60}, vig:{value:1.0}, dmg:{value:0}, low:{value:0},
     ab:{value:0.5}, flash:{value:0}, scope:{value:0}
   });
+window.compMat = compMat;
+if (window.applyQuality) applyQuality();
 
 /* =========================================================================
    3. PROCEDURAL TEXTURES
@@ -3531,7 +3550,9 @@ function makeParticleSystem(count, additive){
   return { geo, pts, data, count, head:0, pos, col, siz, alp };
 }
 const PS_SPARK = makeParticleSystem(360, true);
+window.PS_SPARK = PS_SPARK;
 const PS_SOFT  = makeParticleSystem(360, false);
+window.PS_SOFT = PS_SOFT;
 
 function spawnParticle(sys, x,y,z, vx,vy,vz, o){
   const i = sys.head; sys.head = (sys.head+1) % sys.count;
@@ -5097,8 +5118,9 @@ function requestLock(){
   }, 350);
 }
 UI.startScreen.addEventListener('click', ()=>{ SFX.init(); startGame(); });
-UI.pause.addEventListener('click', ()=>{ SFX.init(); requestLock(); });
+UI.pause.addEventListener('click', (e)=>{ if (e.target === UI.pause || (e.target.classList && e.target.classList.contains('pause-continue'))){ SFX.init(); requestLock(); } });
 $('restartBtn').addEventListener('click', e=>{ e.stopPropagation(); restart(); });
+if (window.setupPauseMenu) window.setupPauseMenu();
 
 /* =========================================================================
    14. SHOOTING
@@ -6086,8 +6108,8 @@ function startMantle(target){
 
 function updatePlayer(dt){
   /* ---- look ---- */
-  player.yaw   -= mouseDX*SENS*sensScale;
-  player.pitch -= mouseDY*SENS*sensScale;
+  player.yaw   -= mouseDX*SENS*sensScale*(window.SettingsStore?SettingsStore.get().sensitivity:1);
+  player.pitch -= mouseDY*SENS*sensScale*(window.SettingsStore?SettingsStore.get().sensitivity:1)*(window.SettingsStore&&SettingsStore.get().invertY?-1:1);
   player.pitch = clamp(player.pitch, -PI/2+0.02, PI/2-0.02);
   const swayInX = mouseDX, swayInY = mouseDY;
   mouseDX = mouseDY = 0;
@@ -6686,7 +6708,7 @@ function onResize(){
   const w = innerWidth, h = innerHeight;
   camera.aspect = w/h; camera.updateProjectionMatrix();
   vmCamera.aspect = w/h; vmCamera.updateProjectionMatrix();
-  renderer.setSize(w,h);
+  if (window.applyQuality) applyQuality(); else renderer.setSize(w,h);
   allocTargets();
   layoutCrosshair();          // recentre, and pick up a display-scale change
 }
@@ -6870,6 +6892,12 @@ function frame(now){
   blit(compMat, null);
 }
 requestAnimationFrame(frame);
+</script>
+<script src="src/pause.js"></script>
+<script>
+  /* V4 集成：避免旧暂停层的点击兜底逻辑吞掉菜单按钮操作。 */
+  const v4PauseMenu = document.getElementById('v4PauseMenu');
+  if (v4PauseMenu) v4PauseMenu.addEventListener('click', event => event.stopPropagation());
 </script>
 </body>
 </html>
