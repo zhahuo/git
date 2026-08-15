@@ -107,7 +107,7 @@ export function ProductDetail({ productId }: { productId: string }) {
 
       <div className="mt-5 grid gap-6 md:grid-cols-2 md:gap-10">
         <div className="overflow-hidden rounded-lg border border-ink-200 bg-ink-50">
-          <img src={product.cover} alt={product.name} className="aspect-square h-full w-full object-cover" />
+          <img src={product.cover} alt={product.name} className="aspect-[4/3] h-full w-full object-cover" />
         </div>
 
         <div className="flex flex-col">
@@ -122,10 +122,10 @@ export function ProductDetail({ productId }: { productId: string }) {
             ) : null}
           </div>
 
-          <h1 className="mt-3 text-xl font-bold leading-7 text-ink-900 sm:text-2xl sm:leading-8">{product.name}</h1>
+          <h1 className="mt-3 text-lg font-bold leading-6 text-ink-900 sm:text-xl sm:leading-7">{product.name}</h1>
 
           <div className="mt-4 rounded-lg border border-danger-100 bg-danger-50 px-4 py-3">
-            <p className="text-2xl font-bold text-danger-600">{formatMoney(product.price_cents)}</p>
+            <p className="text-xl font-bold text-danger-600">{formatMoney(product.price_cents)}</p>
             {product.original_price_cents && product.original_price_cents > product.price_cents && (
               <p className="mt-0.5 text-sm text-ink-400 line-through">{formatMoney(product.original_price_cents)}</p>
             )}

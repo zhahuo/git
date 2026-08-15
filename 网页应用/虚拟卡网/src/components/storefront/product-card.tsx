@@ -17,7 +17,7 @@ export function ProductCard({ product, added, onAdd }: ProductCardProps) {
   return (
     <article className="storefront-card group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
       <Link href={`/products/${product.id}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-ink-100">
+        <div className="relative h-32 overflow-hidden bg-ink-100 sm:h-36">
           <img
             src={product.cover}
             alt={product.name}
@@ -32,7 +32,7 @@ export function ProductCard({ product, added, onAdd }: ProductCardProps) {
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-3">
+      <div className="flex flex-1 flex-col px-3 py-2.5">
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="max-w-[60%] truncate rounded bg-brand-50 px-1.5 py-0.5 text-xs font-medium text-brand-700">
             {product.category_name ?? "未分类"}
@@ -46,7 +46,7 @@ export function ProductCard({ product, added, onAdd }: ProductCardProps) {
         </Link>
         <div className="mt-3 flex items-end justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-lg font-bold leading-6 text-danger-600">{formatMoney(product.price_cents)}</p>
+            <p className="text-base font-bold leading-5 text-danger-600">{formatMoney(product.price_cents)}</p>
             {product.original_price_cents && product.original_price_cents > product.price_cents && (
               <p className="text-xs text-ink-400 line-through">{formatMoney(product.original_price_cents)}</p>
             )}

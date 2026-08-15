@@ -88,8 +88,8 @@ export function ProductExplorer() {
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-ink-900">全部商品</h1>
-          <p className="mt-1 text-sm text-ink-500">官方直供虚拟卡密，付款后自动发货</p>
+          <h1 className="text-lg font-bold text-ink-900">全部商品</h1>
+          <p className="mt-0.5 text-sm text-ink-500">官方直供虚拟卡密，付款后自动发货</p>
         </div>
         <label className="flex items-center gap-2 text-sm text-ink-600">
           <span className="shrink-0">排序</span>
@@ -160,7 +160,7 @@ export function ProductExplorer() {
         </div>
       </div>
 
-      <p className="mt-5 text-sm text-ink-500" aria-live="polite">
+      <p className="mt-4 text-sm text-ink-500" aria-live="polite">
         {loading ? "正在加载商品…" : `共 ${products.length} 件商品`}
       </p>
 
@@ -169,11 +169,11 @@ export function ProductExplorer() {
       )}
 
       {!error && (
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={loading}>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={loading}>
           {loading
             ? Array.from({ length: 8 }).map((_, index) => (
                 <div key={index} className="storefront-card overflow-hidden">
-                  <div className="storefront-skeleton aspect-[4/3]" />
+                  <div className="storefront-skeleton h-32 sm:h-36" />
                   <div className="space-y-2 p-3">
                     <div className="storefront-skeleton h-4 w-1/3" />
                     <div className="storefront-skeleton h-4 w-4/5" />
@@ -195,7 +195,7 @@ export function ProductExplorer() {
       )}
 
       {!loading && !error && products.length > 0 && (
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} added={addedId === product.id} onAdd={handleAdd} />
           ))}
