@@ -58,7 +58,7 @@ async function refresh(){
   document.getElementById('publish').textContent=fmt(await get('/api/publish_tasks?limit=5'));
 }
 function card(label,value){return '<div class="card"><div>'+label+'</div><div class="v">'+value+'</div></div>'}
-refresh();setInterval(refresh,10000);
+refresh();setInterval(refresh,15000);
 </script>
 </body>
 </html>"""

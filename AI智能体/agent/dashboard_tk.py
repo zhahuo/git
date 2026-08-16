@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import tkinter as tk
 import os
+import tkinter as tk
 from pathlib import Path
+from tkinter import ttk
 from typing import Any
 
 from .dashboard import (
@@ -15,196 +16,200 @@ from .dashboard import (
     fetch_summary,
 )
 
+BG = "#f6f2ec"
+CARD_BG = "#fffdf9"
+INK = "#3b302a"
+MUTED = "#6b5b50"
+ACCENT = "#c96f4a"
+EMOTION = "#5a8f7b"
+MEMORY = "#7b6a9f"
+
 
 class DashboardTk:
     def __init__(self, root: tk.Tk, db_path: Path) -> None:
         self.root = root
         self.db_path = db_path
         self.root.title("AI 智能体仪表盘")
-        self.root.geometry("460x720+120+120")
+        self.root.geometry("480x760+120+120")
         self.root.attributes("-topmost", True)
-        self.root.configure(bg="#f6f2ec")
+        self.root.configure(bg=BG)
         self._build_ui()
         self.refresh()
 
     def _build_ui(self) -> None:
-        header = tk.Frame(self.root, bg="#f6f2ec")
-        header.pack(fill="x", padx=12, pady=(10, 4))
+        header = tk.Frame(self.root, bg=BG)
+        header.pack(fill="x", padx=12, pady=(10, 6))
         tk.Label(
             header,
             text="AI 智能体仪表盘",
             font=("Microsoft YaHei UI", 15, "bold"),
-            bg="#f6f2ec",
-            fg="#3b302a",
+            bg=BG,
+            fg=INK,
         ).pack(side="left")
-        self.status_label = tk.Label(
-            header,
-            text="",
-            font=("Microsoft YaHei UI", 10),
-            bg="#f6f2ec",
-            fg="#6b5b50",
-        )
-        self.status_label.pack(side="right")
 
-        self.summary_frame = tk.Frame(self.root, bg="#f6f2ec")
-        self.summary_frame.pack(fill="x", padx=12, pady=4)
-        self.summary_labels: dict[str, tk.Label] = {}
+        card_frame = tk.Frame(self.root, bg=BG)
+        card_frame.pack(fill="x", padx=12)
+        self.cards: dict[str, tk.Label] = {}
         for key, text in (
-            ("tokens", "Token 0"),
-            ("today", "今日 0"),
-            ("mood", "情绪 未知"),
-            ("module", "模块 -"),
+            ("tokens", "总 Token\n0"),
+            ("today", "今日对话\n0"),
+            ("mood", "当前情绪\n未知"),
+            ("module", "模块状态\n-"),
         ):
-            label = tk.Label(
-                self.summary_frame,
-                text=text,
-                font=("Microsoft YaHei UI", 10),
-                bg="#fffdf9",
-                fg="#3b302a",
-                relief="groove",
+            frame = tk.Frame(
+                card_frame,
+                bg=CARD_BG,
+                highlightbackground="#e5ddd4",
+                highlightthickness=1,
                 padx=8,
-                pady=6,
+                pady=8,
             )
-            label.pack(side="left", fill="x", expand=True, padx=3)
-            self.summary_labels[key] = label
+            frame.pack(side="left", fill="x", expand=True, padx=3)
+            label = tk.Label(
+                frame,
+                text=text,
+                font=("Microsoft YaHei UI", 9),
+                bg=CARD_BG,
+                fg=INK,
+                justify="center",
+            )
+            label.pack(fill="x")
+            self.cards[key] = label
 
-        self.canvas = tk.Canvas(
+        chart_header = tk.Label(
             self.root,
-            width=430,
-            height=150,
-            bg="#fffdf9",
-            highlightthickness=0,
+            text="实时趋势",
+            font=("Microsoft YaHei UI", 10, "bold"),
+            bg=BG,
+            fg=INK,
+            anchor="w",
         )
-        self.canvas.pack(fill="x", padx=12, pady=8)
+        chart_header.pack(fill="x", padx=14, pady=(12, 2))
 
-        list_frame = tk.Frame(self.root, bg="#f6f2ec")
-        list_frame.pack(fill="both", expand=True, padx=12, pady=4)
-        self.text = tk.Text(
-            list_frame,
-            font=("Microsoft YaHei UI", 9),
-            bg="#fffdf9",
-            fg="#3b302a",
-            relief="groove",
-            state="disabled",
-            wrap="word",
-        )
-        scroll = tk.Scrollbar(list_frame, command=self.text.yview)
-        self.text.configure(yscrollcommand=scroll.set)
-        scroll.pack(side="right", fill="y")
-        self.text.pack(fill="both", expand=True)
+        self.charts: dict[str, tk.Canvas] = {}
+        for key, color, label in (
+            ("tokens", ACCENT, "Token 消耗"),
+            ("emotions", EMOTION, "情绪曲线"),
+            ("memory", MEMORY, "记忆量"),
+        ):
+            canvas = tk.Canvas(
+                self.root,
+                height=90,
+                bg=CARD_BG,
+                highlightthickness=0,
+            )
+            canvas.pack(fill="x", padx=12, pady=3)
+            canvas.create_text(
+                8,
+                8,
+                text=label,
+                anchor="nw",
+                fill=color,
+                font=("Microsoft YaHei UI", 9, "bold"),
+            )
+            self.charts[key] = canvas
+
+        notebook = ttk.Notebook(self.root)
+        notebook.pack(fill="both", expand=True, padx=12, pady=(10, 12))
+        self.texts: dict[str, tk.Text] = {}
+        for tab, title in (
+            ("conversations", "最近对话"),
+            ("llm", "模型调用"),
+            ("publish", "发布任务"),
+        ):
+            page = tk.Frame(notebook, bg=CARD_BG)
+            notebook.add(page, text=title)
+            text = tk.Text(
+                page,
+                font=("Microsoft YaHei UI", 9),
+                bg=CARD_BG,
+                fg=INK,
+                relief="flat",
+                state="disabled",
+                wrap="word",
+            )
+            text.pack(fill="both", expand=True, padx=6, pady=6)
+            self.texts[tab] = text
 
     def refresh(self) -> None:
         summary = fetch_summary(self.db_path)
-        self.summary_labels["tokens"].config(
-            text=f"Token {summary.get('total_tokens', 0)}"
+        self.cards["tokens"].config(text=f"总 Token\n{summary.get('total_tokens', 0)}")
+        self.cards["today"].config(
+            text=f"今日对话\n{summary.get('today_conversations', 0)}"
         )
-        self.summary_labels["today"].config(
-            text=f"今日 {summary.get('today_conversations', 0)}"
+        self.cards["mood"].config(text=f"当前情绪\n{summary.get('mood', '未知')}")
+        self.cards["module"].config(
+            text=f"模块状态\n{summary.get('module', '-')} {summary.get('status', '未知')}"
         )
-        self.summary_labels["mood"].config(
-            text=f"情绪 {summary.get('mood', '未知')}"
-        )
-        self.summary_labels["module"].config(
-            text=f"{summary.get('module', '-')} {summary.get('status', '未知')}"
-        )
-        self._draw_charts()
-        self._fill_lists()
-        seconds = float(os.getenv("DASHBOARD_REFRESH_SECONDS", "10") or "10")
+        self._draw_chart("tokens", [row.get("total_tokens") or 0 for row in fetch_llm_calls(self.db_path, 60)[::-1]], ACCENT)
+        self._draw_chart("emotions", [row.get("valence") or 0 for row in fetch_emotions(self.db_path, 60)[::-1]], EMOTION)
+        self._draw_chart("memory", [row.get("conversations") or 0 for row in fetch_memory_stats(self.db_path, 60)[::-1]], MEMORY)
+        self._fill_texts()
+        seconds = float(os.getenv("DASHBOARD_REFRESH_SECONDS", "15") or "15")
         self.root.after(max(1000, int(seconds * 1000)), self.refresh)
 
-    def _draw_charts(self) -> None:
-        canvas = self.canvas
-        canvas.delete("all")
-        width = int(canvas["width"])
-        height = int(canvas["height"])
-        llm = fetch_llm_calls(self.db_path, 60)[::-1]
-        emotions = fetch_emotions(self.db_path, 60)[::-1]
-        memory = fetch_memory_stats(self.db_path, 60)[::-1]
-        self._line(
-            canvas,
-            [row.get("total_tokens") or 0 for row in llm],
-            width,
-            height // 3,
-            "#c96f4a",
-            "Token",
-        )
-        self._line(
-            canvas,
-            [row.get("valence") or 0 for row in emotions],
-            width,
-            height // 3,
-            "#5a8f7b",
-            "情绪",
-            offset=height // 3,
-        )
-        self._line(
-            canvas,
-            [row.get("conversations") or 0 for row in memory],
-            width,
-            height // 3,
-            "#7b6a9f",
-            "记忆",
-            offset=height * 2 // 3,
-        )
-
-    @staticmethod
-    def _line(
-        canvas: tk.Canvas,
-        values: list[float],
-        width: int,
-        height: int,
-        color: str,
-        label: str,
-        offset: int = 0,
-    ) -> None:
-        canvas.create_text(
-            8,
-            offset + 10,
-            text=label,
-            anchor="nw",
-            fill=color,
-            font=("Microsoft YaHei UI", 9, "bold"),
-        )
+    def _draw_chart(self, key: str, values: list[float], color: str) -> None:
+        canvas = self.charts[key]
+        canvas.delete("trend")
         if not values:
             return
+        width = max(int(canvas["width"]), 1)
+        height = 90
         max_v = max(max(values), 1)
         min_v = min(min(values), 0)
         span = max(max_v - min_v, 1)
-        points = []
         step = max(width / max(len(values), 1), 1)
-        for i, value in enumerate(values):
-            x = i * step
-            y = offset + height - ((value - min_v) / span) * (height - 16) - 8
+        points: list[tuple[float, float]] = []
+        for index, value in enumerate(values):
+            x = index * step
+            y = height - ((value - min_v) / span) * (height - 20) - 8
             points.append((x, y))
         for (x1, y1), (x2, y2) in zip(points, points[1:]):
-            canvas.create_line(x1, y1, x2, y2, fill=color, width=2)
+            canvas.create_line(x1, y1, x2, y2, fill=color, width=2, tags="trend")
 
-    def _fill_lists(self) -> None:
-        conversations = fetch_conversations(self.db_path, 5)
-        llm = fetch_llm_calls(self.db_path, 5)
-        publish = fetch_publish_tasks(self.db_path, 5)
-        lines = ["== 最近对话 =="]
-        for row in conversations:
+    def _fill_texts(self) -> None:
+        conversations = fetch_conversations(self.db_path, 8)
+        llm = fetch_llm_calls(self.db_path, 8)
+        publish = fetch_publish_tasks(self.db_path, 8)
+        self._set_text("conversations", self._format_conversations(conversations))
+        self._set_text("llm", self._format_llm(llm))
+        self._set_text("publish", self._format_publish(publish))
+
+    @staticmethod
+    def _format_conversations(rows: list[dict[str, Any]]) -> str:
+        lines = []
+        for row in rows:
             role = "用户" if row.get("role") == "user" else "AI"
             content = (row.get("content") or "").replace("\n", " ")
-            lines.append(f"{role}: {content[:60]}")
-        lines.append("")
-        lines.append("== 最近模型调用 ==")
-        for row in llm:
+            lines.append(f"{role}：{content[:80]}")
+        return "\n\n".join(lines) or "暂无对话"
+
+    @staticmethod
+    def _format_llm(rows: list[dict[str, Any]]) -> str:
+        lines = []
+        for row in rows:
             lines.append(
-                f"{row.get('model')} token={row.get('total_tokens')} "
-                f"延迟={row.get('latency_ms')}ms"
+                f"{row.get('model')}\n"
+                f"Token {row.get('total_tokens')} · "
+                f"延迟 {row.get('latency_ms')}ms"
             )
-        lines.append("")
-        lines.append("== 最近发布 ==")
-        for row in publish:
+        return "\n\n".join(lines) or "暂无模型调用"
+
+    @staticmethod
+    def _format_publish(rows: list[dict[str, Any]]) -> str:
+        lines = []
+        for row in rows:
             lines.append(
-                f"{row.get('platform')} [{row.get('status')}] {row.get('title')}"
+                f"{row.get('platform')} [{row.get('status')}]\n{row.get('title')}"
             )
-        self.text.configure(state="normal")
-        self.text.delete("1.0", "end")
-        self.text.insert("1.0", "\n".join(lines))
-        self.text.configure(state="disabled")
+        return "\n\n".join(lines) or "暂无发布任务"
+
+    def _set_text(self, key: str, content: str) -> None:
+        text = self.texts[key]
+        text.configure(state="normal")
+        text.delete("1.0", "end")
+        text.insert("1.0", content)
+        text.configure(state="disabled")
 
 
 def run_dashboard(config: Any) -> None:
