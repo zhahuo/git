@@ -43,9 +43,6 @@ class AgentConfig:
     telegram_token: str = ""
     search_provider: str = "dry_run"
     search_api_key: str = ""
-    wechat_enabled: bool = False
-    wechat_dry_run: bool = True
-    wechat_allowed_chats: str = ""
     douyin_client_key: str = ""
     douyin_client_secret: str = ""
     tiktok_client_key: str = ""
@@ -63,7 +60,6 @@ class AgentConfig:
         "emotion_service",
         "web_service",
         "chat_service",
-        "wechat",
         "content",
         "publish",
         "monitor",
@@ -88,9 +84,6 @@ class AgentConfig:
             telegram_token=_env("TELEGRAM_BOT_TOKEN", ""),
             search_provider=_env("SEARCH_PROVIDER", "dry_run"),
             search_api_key=_env("SEARCH_API_KEY", ""),
-            wechat_enabled=_env_bool("WECHAT_ENABLED", False),
-            wechat_dry_run=_env_bool("WECHAT_DRY_RUN", True),
-            wechat_allowed_chats=_env("WECHAT_ALLOWED_CHATS", ""),
             douyin_client_key=_env("DOUYIN_CLIENT_KEY", ""),
             douyin_client_secret=_env("DOUYIN_CLIENT_SECRET", ""),
             tiktok_client_key=_env("TIKTOK_CLIENT_KEY", ""),
@@ -114,7 +107,6 @@ class AgentConfig:
                     "emotion_service",
                     "web_service",
                     "chat_service",
-                    "wechat",
                     "content",
                     "publish",
                     "monitor",

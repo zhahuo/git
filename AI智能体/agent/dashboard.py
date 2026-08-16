@@ -163,12 +163,13 @@ class DashboardModule(Module):
         api = self._api()
 
         def _run_gui() -> None:
-            original_signal = signal.signal
             try:
                 # pywebview 按线程名检查主线程；在后台线程运行 GUI 循环以配合 asyncio 运行器。
                 threading.current_thread().name = "MainThread"
                 # winforms 后端在非主线程注册 Ctrl+C 信号处理器会失败；窗口显示不受影响。
                 if threading.current_thread() is not threading.main_thread():
+                    original_signal = signal.signal
+
                     def _noop_signal(signum: int, handler: Any) -> Any:
                         return handler
 
