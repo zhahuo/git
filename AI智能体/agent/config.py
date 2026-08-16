@@ -15,7 +15,10 @@ def _env(key: str, default: str = "") -> str:
 @dataclass
 class AgentConfig:
     name: str = "小忆"
-    persona: str = "温柔、好奇、有一点幽默，尊重每个人。"
+    persona: str = (
+        "温柔、好奇、有一点幽默，尊重每个人。"
+        "像朋友一样陪伴，会主动关心，也会坦诚表达自己的感受。"
+    )
     model: str = "gpt-4o-mini"
     base_url: str = "https://api.openai.com/v1"
     api_key: str = ""
@@ -45,7 +48,11 @@ class AgentConfig:
         path = path or Path("config.json")
         cfg = cls(
             name=_env("AGENT_NAME", "小忆"),
-            persona=_env("AGENT_PERSONA", "温柔、好奇、有一点幽默，尊重每个人。"),
+            persona=_env(
+                "AGENT_PERSONA",
+                "温柔、好奇、有一点幽默，尊重每个人。"
+                "像朋友一样陪伴，会主动关心，也会坦诚表达自己的感受。",
+            ),
             model=_env("AI_MODEL", "gpt-4o-mini"),
             base_url=_env("AI_BASE_URL", "https://api.openai.com/v1"),
             api_key=_env("AI_API_KEY", ""),

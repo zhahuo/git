@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -14,7 +15,7 @@ from ..module import Module
 logger = logging.getLogger(__name__)
 
 COMPACT_INTERVAL_SECONDS = 6 * 60 * 60
-COMPACT_DEFAULT_DAYS = 7
+COMPACT_DEFAULT_DAYS = 30
 COMPACT_SUMMARY_MAX_CHARS = 2000
 RECALL_CACHE_SIZE = 256
 
@@ -30,7 +31,7 @@ class MemoryService(Module):
         bus: AgentBus | None = None,
         store: MemoryStore | None = None,
         compaction_interval: float = COMPACT_INTERVAL_SECONDS,
-        compact_after_days: int = COMPACT_DEFAULT_DAYS,
+        compact_after_days: int | None = None,
         summary_max_chars: int = COMPACT_SUMMARY_MAX_CHARS,
         recall_cache_size: int = RECALL_CACHE_SIZE,
     ) -> None:
@@ -38,6 +39,11 @@ class MemoryService(Module):
         self.store = store
         self._owns_store = store is None
         self.compaction_interval = max(0.0, float(compaction_interval))
+        if compact_after_days is None:
+            raw_days = os.getenv("MEMORY_COMPACT_DAYS", str(COMPACT_DEFAULT_DAYS))
+            compact_after_days = (
+                int(raw_days) if str(raw_days).strip().isdigit() else COMPACT_DEFAULT_DAYS
+            )
         self.compact_after_days = max(0, int(compact_after_days))
         self.summary_max_chars = max(1, int(summary_max_chars))
         self._recall_cache_size = max(1, int(recall_cache_size))
