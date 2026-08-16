@@ -151,6 +151,7 @@ async function shoot(context, slug, pathname, { waitText, extraDelay = 500 } = {
   const results = [];
   for (const viewport of VIEWPORTS) {
     const page = await context.newPage({ viewport });
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
     const url = `${BASE_URL}${pathname}`;
     await page.goto(url, { waitUntil: "networkidle", timeout: 30_000 });
     if (waitText) {

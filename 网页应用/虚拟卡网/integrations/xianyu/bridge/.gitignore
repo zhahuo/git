@@ -1,0 +1,5 @@
+runtime/
+logs/
+*.db
+*.db-wal
+*.db-shm

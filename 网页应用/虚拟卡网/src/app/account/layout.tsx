@@ -16,7 +16,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
+    <div className="mx-auto min-h-screen w-full max-w-6xl bg-[#f4f5f7] px-4 py-6 text-slate-900 sm:px-6 lg:py-8">
       <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
         <aside>
           <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:pb-0" aria-label="个人中心导航">

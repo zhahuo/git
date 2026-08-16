@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PackageSearch, Search, X } from "lucide-react";
+import { BadgeCheck, PackageSearch, Search, ShieldCheck, Ticket, X } from "lucide-react";
 import type { StoreCategory, StoreProduct } from "./types";
 import { useCart } from "./cart-context";
 import { ProductCard } from "./product-card";
@@ -86,10 +86,50 @@ export function ProductExplorer() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <section className="mb-5 overflow-hidden rounded-lg border border-[#2b2e34] bg-gradient-to-br from-[#1b3047] to-[#101114] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-orange-500 text-white">
+              <Ticket className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base font-bold text-white">虚拟卡网</h2>
+                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-xs font-medium text-emerald-400">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                  已认证
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-zinc-400">官方直供 · 付款后自动发货</p>
+            </div>
+          </div>
+          <span className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-[#25282e] px-2.5 py-1.5 text-xs font-medium text-zinc-300 sm:inline-flex">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            保证金 ¥1000
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#2b2e34] pt-3 text-center">
+          <div>
+            <p className="text-lg font-bold text-white">{loading ? "…" : products.length}</p>
+            <p className="mt-0.5 text-xs text-zinc-500">在售商品</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white">
+              {loading ? "…" : products.reduce((sum, product) => sum + product.sales_count, 0)}
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">累计成交</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white">¥1000</p>
+            <p className="mt-0.5 text-xs text-zinc-500">保障金</p>
+          </div>
+        </div>
+      </section>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-lg font-bold text-ink-900">全部商品</h1>
-          <p className="mt-0.5 text-sm text-ink-500">官方直供虚拟卡密，付款后自动发货</p>
+          <h1 className="text-lg font-bold text-white">全部商品</h1>
+          <p className="mt-0.5 text-xs text-zinc-500">付款后自动发货 · 安全稳定</p>
         </div>
         <label className="flex items-center gap-2 text-sm text-ink-600">
           <span className="shrink-0">排序</span>

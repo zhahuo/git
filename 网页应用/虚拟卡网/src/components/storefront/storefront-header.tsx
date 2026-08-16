@@ -42,8 +42,8 @@ export function StorefrontHeader() {
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
 
-        <Link href="/" className="flex min-w-0 items-center gap-2 text-lg font-bold text-ink-900">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-600 text-white">
+        <Link href="/" className="flex min-w-0 items-center gap-2 text-base font-bold text-white">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-orange-500 text-white">
             <Ticket className="h-5 w-5" />
           </span>
           <span className="truncate">虚拟卡网</span>
@@ -104,26 +104,26 @@ export function StorefrontHeader() {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-ink-200 bg-white lg:hidden">
+        <div className="border-t border-[#2b2e34] bg-[#16181c] lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col px-4 py-2 sm:px-6" aria-label="移动端菜单">
-            <Link href="/" className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-100">
+            <Link href="/" className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800">
               全部商品
             </Link>
-            <Link href="/cart" className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-100">
+            <Link href="/cart" className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800">
               购物车
             </Link>
-            <Link href="/account" className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-100">
+            <Link href="/account" className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800">
               个人中心
             </Link>
             {user?.role === "admin" && (
-              <Link href="/admin" className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-100">
+              <Link href="/admin" className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800">
                 管理后台
               </Link>
             )}
-            <div className="my-2 border-t border-ink-100 pt-2">
+            <div className="my-2 border-t border-[#2b2e34] pt-2">
               {user ? (
                 <div className="flex items-center justify-between gap-3 px-3 py-2">
-                  <span className="truncate text-sm font-semibold text-ink-800">{displayName}</span>
+                  <span className="truncate text-sm font-semibold text-zinc-200">{displayName}</span>
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-danger-600 hover:bg-danger-50"

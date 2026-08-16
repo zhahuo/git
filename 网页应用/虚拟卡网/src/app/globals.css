@@ -44,8 +44,8 @@ html {
 }
 
 body {
-  background: #ffffff;
-  color: var(--color-ink-800);
+  background: #101114;
+  color: #e5e7eb;
   font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -62,8 +62,8 @@ input[type="number"] {
 }
 
 .storefront-card {
-  background: #ffffff;
-  border: 1px solid var(--color-ink-200);
+  background: #1b1d21;
+  border: 1px solid #2b2e34;
   border-radius: 8px;
 }
 
@@ -252,4 +252,73 @@ textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
+}
+
+/* Compact dark storefront surface inspired by the mobile reference layout. */
+header.sticky {
+  border-color: #2b2e34;
+  background: rgb(16 17 20 / 94%);
+}
+
+.storefront-card .text-ink-900,
+.storefront-card .text-ink-800,
+.storefront-card .text-ink-700 {
+  color: #f3f4f6;
+}
+
+.storefront-card .text-ink-600,
+.storefront-card .text-ink-500 {
+  color: #a1a1aa;
+}
+
+.storefront-chip {
+  border-color: #30343b;
+  background: #1b1d21;
+  color: #a1a1aa;
+  padding: 0.375rem 0.75rem;
+}
+
+.storefront-chip-active {
+  border-color: #f97316;
+  background: transparent;
+  color: #fb923c;
+}
+
+.storefront-chip-active:hover {
+  border-color: #fb923c;
+  background: rgb(249 115 22 / 0.1);
+  color: #fdba74;
+}
+
+.storefront-input {
+  border-color: #30343b;
+  background: #1b1d21;
+  color: #f3f4f6;
+}
+
+.storefront-input::placeholder {
+  color: #71717a;
+}
+
+.storefront-btn-secondary {
+  border-color: #3f434b;
+  background: #1b1d21;
+  color: #e5e7eb;
+}
+
+.storefront-btn-secondary:hover:not(:disabled) {
+  border-color: #525866;
+  background: #24272d;
+}
+
+.storefront-btn-primary {
+  background: #f97316;
+}
+
+.storefront-btn-primary:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+.storefront-skeleton {
+  background: #272a30;
 }

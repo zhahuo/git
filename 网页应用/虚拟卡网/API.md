@@ -10,6 +10,7 @@
 - 会话使用 httpOnly Cookie：`vc_session`，有效期 30 天。浏览器调用登录、注册接口后自动携带。
 - 角色：`user`（普通用户）、`admin`（管理员，种子账号 `admin / admin123`）。普通用户种子账号 `user / user123`，初始余额 5000 分。
 - 管理端接口统一以 `/api/admin/` 开头，仅 `admin` 角色可访问；普通用户访问返回 `403`，未登录返回 `401`。
+- 外部集成接口以 `/api/integration/` 开头，使用请求头 `Authorization: Bearer <INTEGRATION_API_TOKEN>` 鉴权；令牌未配置返回 `503`。
 
 ## 2. 错误码
 
@@ -20,6 +21,7 @@
 | 403 | 无权限 | 普通用户访问 `/api/admin/*` |
 | 404 | 资源不存在 | 商品/订单/分类/卡密不存在 |
 | 409 | 业务状态冲突 | 库存不足、余额不足、订单状态不可操作、用户名或分类已存在 |
+| 503 | 服务未就绪 | `INTEGRATION_API_TOKEN` 未配置，外部集成接口不可用 |
 | 500 | 服务器内部错误 | 未预期的数据库或运行时异常 |
 
 错误响应体：
@@ -623,7 +625,116 @@ pending ──> paid ──> delivered（保留的中间状态，用于未来人
 
 说明：`today` 按 Asia/Shanghai 自然日统计已发货订单；`total` 为累计已发货订单统计；`pending_orders_count` 为待支付订单数；`totalUsers` 为注册用户总数；`low_stock_products` 为可用库存小于等于预警阈值的商品；`recent_orders` 为最近 10 个订单。
 
-## 6. 字段说明
+### 5.16 GET /api/admin/integration/claims
+
+查询外部发卡记录（闲鱼自动发货对账），仅管理员可访问。数据来自 `integration_claims` 表，按 `created_at DESC` 排序。
+
+查询参数：
+
+| 参数 | 说明 |
+| --- | --- |
+| `product_id` | 按商品精确筛选 |
+| `external_order_no` | 外部订单号模糊搜索 |
+| `created_from` | 创建时间下限，格式 `YYYY-MM-DD` 或 `YYYY-MM-DD HH:MM:SS`（UTC），可省略 |
+| `created_to` | 创建时间上限，格式同上；传日期时自动补到当日 23:59:59 |
+| `limit` | 默认 50，最大 200 |
+| `offset` | 默认 0 |
+
+响应 `200`：
+
+```json
+{
+  "claims": [
+    {
+      "id": 1,
+      "claim_no": "EXT17868000000001234",
+      "external_order_no": "XIANYU-20260815-001",
+      "product_id": 1,
+      "product_name": "Steam 充值卡 50 元",
+      "quantity": 2,
+      "card_ids": "[1,2]",
+      "created_at": "2026-08-15 06:00:00"
+    }
+  ],
+  "total": 1
+}
+```
+
+说明：`card_ids` 为 JSON 数组字符串，表示本次发放的卡密 ID 列表，对账时可按 `claim_no` 关联外部订单。无匹配记录时返回空数组和 `total: 0`。
+
+curl 示例：
+
+```bash
+curl "http://localhost:3000/api/admin/integration/claims?external_order_no=XIANYU&limit=20" \
+  -H "Cookie: vc_session=<admin-session>"
+```
+
+## 6. 外部集成接口
+
+外部集成接口供闲鱼自动回复/自动发货系统或其他外部系统调用，用于从卡网库存中锁定并领取卡密。调用方需在服务端配置环境变量 `INTEGRATION_API_TOKEN`（生产环境使用足够长的随机字符串），请求时携带：
+
+```text
+Authorization: Bearer <INTEGRATION_API_TOKEN>
+```
+
+### 6.1 POST /api/integration/cards/claim
+
+领取指定商品的卡密，并将卡密标记为已售。同一张卡密只发放一次；库存不足时整体失败，不产生部分发货。
+
+请求体：
+
+```json
+{
+  "product_id": 1,
+  "quantity": 2,
+  "external_order_no": "XIANYU-20260815-001"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `product_id` | number | 是 | 商品 ID，商品需存在且在售 |
+| `quantity` | number | 是 | 领取数量，1-99 |
+| `external_order_no` | string | 否 | 外部订单号；传入后重复领取返回 `409`，用于防止闲鱼侧重复发货 |
+
+响应 `200`：
+
+```json
+{
+  "ok": true,
+  "claim_no": "EXT17868000000001234",
+  "external_order_no": "XIANYU-20260815-001",
+  "product_id": 1,
+  "product_name": "Steam 充值卡 50 元",
+  "quantity": 2,
+  "cards": [
+    { "id": 1, "content": "1234-5678-9012-3456" },
+    { "id": 2, "content": "2345-6789-0123-4567" }
+  ],
+  "remaining_stock": 58
+}
+```
+
+错误示例：
+
+```text
+401 缺少或错误的 Bearer 令牌
+409 库存不足 / 商品已下架 / 外部订单号重复
+503 INTEGRATION_API_TOKEN 未配置
+```
+
+curl 示例：
+
+```bash
+curl -X POST http://localhost:3000/api/integration/cards/claim \
+  -H "Authorization: Bearer your-token" \
+  -H "Content-Type: application/json" \
+  -d '{"product_id":1,"quantity":1,"external_order_no":"XIANYU-001"}'
+```
+
+说明：每次领取在 `BEGIN IMMEDIATE` 事务内完成，先校验外部订单号与库存，再锁定卡密并写入 `integration_claims` 记录；`claim_no` 是本次发放的唯一流水号。外部系统建议把 `claim_no` 与卡密内容一起存档，便于对账。
+
+## 7. 字段说明
 
 ### orders
 
@@ -649,3 +760,15 @@ pending ──> paid ──> delivered（保留的中间状态，用于未来人
 | `status` | string | `available` / `sold` |
 | `order_item_id` | number/null | 绑定的订单明细；未售出为 null |
 | `sold_at` | string/null | 售出时间（UTC） |
+
+### integration_claims
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | number | 自增主键 |
+| `claim_no` | string | 唯一发卡流水号（`EXT` 开头） |
+| `external_order_no` | string/null | 外部订单号，唯一；空表示未指定 |
+| `product_id` | number | 商品 ID |
+| `quantity` | number | 领取数量 |
+| `card_ids` | string | JSON 数组，本次发放的卡密 ID 列表 |
+| `created_at` | string | 领取时间（UTC） |

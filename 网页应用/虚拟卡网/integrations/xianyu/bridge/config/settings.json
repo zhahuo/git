@@ -1,0 +1,38 @@
+{
+  "cardApi": {
+    "baseUrl": "http://127.0.0.1:3000",
+    "claimPath": "/api/integration/cards/claim",
+    "tokenEnv": "INTEGRATION_API_TOKEN",
+    "timeoutMs": 10000
+  },
+  "retry": {
+    "maxRetries": 3,
+    "baseDelayMs": 500,
+    "maxDelayMs": 3000
+  },
+  "sender": {
+    "mode": "http",
+    "http": {
+      "url": "",
+      "timeoutMs": 8000,
+      "headers": {}
+    }
+  },
+  "notifyAdmin": {
+    "http": {
+      "url": "",
+      "timeoutMs": 8000,
+      "headers": {}
+    }
+  },
+  "message": {
+    "sendMode": "merged",
+    "cardsSeparator": "\n",
+    "mergedTemplate": "您购买的《{product_name}》已发货，共 {quantity} 张卡密：\n{cards_lines}\n\n订单号：{external_order_no}\n发货单号：{claim_no}\n请妥善保管，勿泄露给他人。",
+    "perCardTemplate": "您购买的《{product_name}》第 {index}/{quantity} 张卡密：\n{content}\n\n订单号：{external_order_no}\n发货单号：{claim_no}\n请妥善保管，勿泄露给他人。",
+    "businessErrorReply": "库存不足，请联系客服"
+  },
+  "runtimeDir": "runtime",
+  "logDir": "logs",
+  "stateFile": "bridge.db"
+}

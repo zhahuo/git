@@ -11,3 +11,9 @@ data/*.db-shm
 *.tsbuildinfo
 playwright-report
 test-results
+integrations/xianyu/venv
+integrations/xianyu/runtime
+integrations/xianyu/logs
+integrations/xianyu/data
+integrations/xianyu/*.db
+integrations/xianyu/bridge/runtime

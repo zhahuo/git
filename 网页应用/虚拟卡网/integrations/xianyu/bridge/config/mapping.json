@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "_comment": "item_id 精确匹配优先，其次按 aliases 标题关键词匹配；enabled 为 true 才参与匹配",
+  "items": [
+    {
+      "item_id": "123456789012",
+      "title": "Steam 充值卡 50 元 秒发",
+      "product_id": 1,
+      "quantity": 1,
+      "enabled": false,
+      "note": "示例：替换为真实闲鱼 ItemId，并把 enabled 改为 true"
+    },
+    {
+      "item_id": "123456789013",
+      "title": "B站大会员 月卡",
+      "product_id": 3,
+      "quantity": 1,
+      "enabled": false,
+      "note": "示例：多张卡可配置 quantity: 2"
+    }
+  ],
+  "aliases": [
+    {
+      "title_contains": "Steam 50",
+      "product_id": 1,
+      "quantity": 1,
+      "enabled": false,
+      "note": "示例：标题含关键词时兜底匹配"
+    }
+  ]
+}

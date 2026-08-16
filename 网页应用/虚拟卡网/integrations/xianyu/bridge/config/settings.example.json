@@ -1,0 +1,43 @@
+{
+  "_comment": "复制为 settings.json 后按需修改；字符串中的 ${ENV_NAME} 会从环境变量读取，避免提交密钥",
+  "cardApi": {
+    "baseUrl": "http://127.0.0.1:3000",
+    "claimPath": "/api/integration/cards/claim",
+    "tokenEnv": "INTEGRATION_API_TOKEN",
+    "timeoutMs": 10000
+  },
+  "retry": {
+    "maxRetries": 3,
+    "baseDelayMs": 500,
+    "maxDelayMs": 3000
+  },
+  "sender": {
+    "mode": "http",
+    "http": {
+      "url": "http://127.0.0.1:15700/api/reply/send",
+      "timeoutMs": 8000,
+      "headers": {
+        "Authorization": "Bearer ${XIANYU_BACKEND_TOKEN}"
+      }
+    }
+  },
+  "notifyAdmin": {
+    "http": {
+      "url": "http://127.0.0.1:15700/api/admin/notify",
+      "timeoutMs": 8000,
+      "headers": {
+        "Authorization": "Bearer ${XIANYU_BACKEND_TOKEN}"
+      }
+    }
+  },
+  "message": {
+    "sendMode": "merged",
+    "cardsSeparator": "\n",
+    "mergedTemplate": "您购买的《{product_name}》已发货，共 {quantity} 张卡密：\n{cards_lines}\n\n订单号：{external_order_no}\n发货单号：{claim_no}\n请妥善保管，勿泄露给他人。",
+    "perCardTemplate": "您购买的《{product_name}》第 {index}/{quantity} 张卡密：\n{content}\n\n订单号：{external_order_no}\n发货单号：{claim_no}\n请妥善保管，勿泄露给他人。",
+    "businessErrorReply": "库存不足，请联系客服"
+  },
+  "runtimeDir": "runtime",
+  "logDir": "logs",
+  "stateFile": "bridge.db"
+}

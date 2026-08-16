@@ -8,6 +8,7 @@
  * 用法：
  *   node scripts/smoke.mjs
  *   SMOKE_BASE_URL=http://127.0.0.1:3000 node scripts/smoke.mjs
+ * 设置 INTEGRATION_API_TOKEN 后额外执行闲鱼发卡集成检查（未设置时输出 SKIP）。
  */
 
 import path from "node:path";
@@ -15,8 +16,10 @@ import { DatabaseSync } from "node:sqlite";
 
 const BASE_URL = (process.env.SMOKE_BASE_URL || "http://127.0.0.1:3000").replace(/\/+$/, "");
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), "data", "app.db");
+const INTEGRATION_TOKEN = (process.env.INTEGRATION_API_TOKEN ?? "").trim();
 
 let passed = 0;
+let skipped = 0;
 const failures = [];
 const cookies = new Map();
 
@@ -60,6 +63,26 @@ async function api(pathname, { method = "GET", body, as } = {}) {
   return { status: res.status, data };
 }
 
+async function integrationApi(pathname, { method = "GET", body, token } = {}) {
+  const headers = { accept: "application/json", authorization: `Bearer ${token}` };
+  if (body !== undefined) headers["content-type"] = "application/json";
+  const res = await fetch(BASE_URL + pathname, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
+  return { status: res.status, data };
+}
+
 function expect(condition, message) {
   if (!condition) throw new Error(message || "断言失败");
 }
@@ -78,7 +101,12 @@ function expectEqual(actual, expected, message) {
   );
 }
 
-async function check(name, fn) {
+async function check(name, fn, { enabled = true } = {}) {
+  if (!enabled) {
+    skipped++;
+    console.log(`SKIP  ${name}（未设置 INTEGRATION_API_TOKEN）`);
+    return;
+  }
   const start = Date.now();
   try {
     await fn();
@@ -504,6 +532,117 @@ await check("管理端订单列表筛选", async () => {
   expect(typeof res.data.total === "number", "列表应返回总数");
 });
 
+// 外部集成（闲鱼自动发货）
+const integrationReady = INTEGRATION_TOKEN.length > 0;
+let integrationOrderNo = "";
+let integrationClaimNo = "";
+
+await check("领卡接口错误令牌返回 401", async () => {
+  const res = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 1, quantity: 1, external_order_no: "SMOKE-BAD-TOKEN" },
+    token: "wrong-token",
+  });
+  expectStatus(res, 401);
+}, { enabled: integrationReady });
+
+await check("领卡成功并扣库存", async () => {
+  const before = (await api("/api/products/1")).data.product.stock_count;
+  integrationOrderNo = `SMOKE-XIANYU-${Date.now()}`;
+  const res = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 1, quantity: 1, external_order_no: integrationOrderNo },
+    token: INTEGRATION_TOKEN,
+  });
+  expectStatus(res, 200);
+  expectEqual(res.data.ok, true);
+  expect(String(res.data.claim_no ?? "").startsWith("EXT"), "claim_no 应以 EXT 开头");
+  expect(Array.isArray(res.data.cards) && res.data.cards.length === 1, "应返回 1 张卡密");
+  expectEqual(res.data.remaining_stock, before - 1, "剩余库存应减少 1");
+  integrationClaimNo = res.data.claim_no;
+}, { enabled: integrationReady });
+
+await check("重复外部订单领卡返回 409", async () => {
+  const externalOrderNo = `SMOKE-XIANYU-DUP-${Date.now()}`;
+  const first = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 3, quantity: 1, external_order_no: externalOrderNo },
+    token: INTEGRATION_TOKEN,
+  });
+  expectStatus(first, 200);
+  const again = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 3, quantity: 1, external_order_no: externalOrderNo },
+    token: INTEGRATION_TOKEN,
+  });
+  expectStatus(again, 409);
+  expect(String(again.data.error ?? "").includes("已发过卡"), "错误文案应提示已发过卡");
+}, { enabled: integrationReady });
+
+await check("库存不足领卡返回 409", async () => {
+  const res = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 9, quantity: 99, external_order_no: `SMOKE-XIANYU-STOCK-${Date.now()}` },
+    token: INTEGRATION_TOKEN,
+  });
+  expectStatus(res, 409);
+  expect(String(res.data.error ?? "").includes("库存不足"), "错误文案应提示库存不足");
+}, { enabled: integrationReady });
+
+await check("商品不存在领卡返回 404", async () => {
+  const res = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 999999, quantity: 1, external_order_no: `SMOKE-XIANYU-404-${Date.now()}` },
+    token: INTEGRATION_TOKEN,
+  });
+  expectStatus(res, 404);
+}, { enabled: integrationReady });
+
+await check("数量不合法领卡返回 400", async () => {
+  const res = await integrationApi("/api/integration/cards/claim", {
+    method: "POST",
+    body: { product_id: 1, quantity: 0, external_order_no: `SMOKE-XIANYU-400-${Date.now()}` },
+    token: INTEGRATION_TOKEN,
+  });
+  expectStatus(res, 400);
+}, { enabled: integrationReady });
+
+await check("未登录查询发卡记录返回 401", async () => {
+  const res = await api("/api/admin/integration/claims");
+  expectStatus(res, 401);
+});
+
+await check("普通用户查询发卡记录返回 403", async () => {
+  const res = await api("/api/admin/integration/claims", { as: "user" });
+  expectStatus(res, 403);
+});
+
+await check("管理员按外部订单号查询发卡记录", async () => {
+  const res = await api(
+    `/api/admin/integration/claims?external_order_no=${encodeURIComponent(integrationOrderNo)}`,
+    { as: "admin" }
+  );
+  expectStatus(res, 200);
+  expectEqual(res.data.total, 1);
+  const claim = res.data.claims[0];
+  expectEqual(claim.claim_no, integrationClaimNo);
+  expectEqual(claim.product_name, "Steam 充值卡 50 元");
+  const cardIds = JSON.parse(claim.card_ids);
+  expect(Array.isArray(cardIds) && cardIds.length === 1, "card_ids 应为 1 个卡密 ID");
+}, { enabled: integrationReady });
+
+await check("发卡记录分页与总数", async () => {
+  const res = await api("/api/admin/integration/claims?limit=1&offset=0", { as: "admin" });
+  expectStatus(res, 200);
+  expect(res.data.claims.length === 1 && res.data.total >= 2, "分页应返回 1 条且 total 正确");
+}, { enabled: integrationReady });
+
+await check("后台发卡记录页面 200", async () => {
+  const res = await api("/admin/claims", { as: "admin" });
+  expectStatus(res, 200);
+  expect(typeof res.data === "string" && res.data.includes("发卡记录"), "页面应包含发卡记录标题");
+});
+
 await check("退出登录后会话失效", async () => {
   const res = await api("/api/auth/logout", { method: "POST", as: "user" });
   expectStatus(res, 200);
@@ -511,8 +650,8 @@ await check("退出登录后会话失效", async () => {
   expectStatus(me, 401);
 });
 
-const total = passed + failures.length;
-console.log(`\n汇总: ${passed}/${total} PASS, ${failures.length} FAIL`);
+const total = passed + failures.length + skipped;
+console.log(`\n汇总: ${passed}/${total} PASS, ${failures.length} FAIL, ${skipped} SKIP`);
 if (failures.length > 0) {
   console.log("失败明细:");
   for (const failure of failures) {

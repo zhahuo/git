@@ -105,3 +105,16 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_balance_logs_user ON balance_logs(user_id);
+
+CREATE TABLE IF NOT EXISTS integration_claims (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  claim_no TEXT NOT NULL UNIQUE,
+  external_order_no TEXT UNIQUE,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  quantity INTEGER NOT NULL,
+  card_ids TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_integration_claims_product ON integration_claims(product_id);
+CREATE INDEX IF NOT EXISTS idx_integration_claims_external ON integration_claims(external_order_no);

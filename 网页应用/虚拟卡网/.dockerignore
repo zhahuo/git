@@ -4,6 +4,11 @@ node_modules
 .pnpm-store
 data
 docs/screenshots
+integrations/xianyu/venv
+integrations/xianyu/runtime
+integrations/xianyu/logs
+integrations/xianyu/data
+integrations/xianyu/*.db
 *.tsbuildinfo
 .git
 .gitignore

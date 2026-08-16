@@ -8,6 +8,8 @@ services:
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
+      INTEGRATION_API_TOKEN: ${INTEGRATION_API_TOKEN:-}
+      INTEGRATION_API_TOKEN: "replace-with-a-long-random-token"
     volumes:
       - virtual-card-data:/app/data
     restart: unless-stopped

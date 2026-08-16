@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Receipt,
   ShieldCheck,
   ShoppingCart,
   Tags,
@@ -18,6 +19,7 @@ const items = [
   { href: "/admin/products", label: "商品", icon: Package },
   { href: "/admin/categories", label: "分类", icon: Tags },
   { href: "/admin/cards", label: "卡密", icon: KeyRound },
+  { href: "/admin/claims", label: "发卡记录", icon: Receipt },
   { href: "/admin/orders", label: "订单", icon: ShoppingCart },
 ];
 
