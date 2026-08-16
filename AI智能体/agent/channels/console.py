@@ -5,6 +5,7 @@ import sys
 import time
 
 from .base import Channel
+from .humanize import message_delay, split_reply, thinking_delay
 
 BACKGROUND = os.getenv("AGENT_BACKGROUND") == "1"
 
@@ -51,4 +52,13 @@ class ConsoleChannel(Channel):
             except Exception as exc:
                 print(f"{name}：出错了：{exc}")
                 continue
-            print(f"{name}：{reply}")
+            print(f"{name}：……")
+            time.sleep(thinking_delay(self.brain.config))
+            if self.brain.config.multi_reply_enabled:
+                segments = split_reply(reply)
+                for index, segment in enumerate(segments):
+                    print(f"{name}：{segment}")
+                    if index < len(segments) - 1:
+                        time.sleep(message_delay(self.brain.config))
+            else:
+                print(f"{name}：{reply}")

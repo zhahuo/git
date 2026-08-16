@@ -198,7 +198,8 @@ class MemoryStore:
             overlap = len(tokens & tokenize(content))
             base = 1.0 if kind == "记忆" else 0.4
             scored.append((overlap * 3.0 + base, created_at, kind, content))
-        scored.sort(key=lambda row: (-row[0], row[1]))
+        scored.sort(key=lambda row: row[1], reverse=True)
+        scored.sort(key=lambda row: -row[0])
         return [
             MemoryItem(kind=kind, created_at=created_at, content=content, score=score)
             for score, created_at, kind, content in scored[:limit]

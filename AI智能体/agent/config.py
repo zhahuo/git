@@ -12,6 +12,23 @@ def _env(key: str, default: str = "") -> str:
     return os.getenv(key, default)
 
 
+def _env_float(key: str, default: float) -> float:
+    raw = os.getenv(key, "")
+    try:
+        return float(raw) if raw else default
+    except ValueError:
+        return default
+
+
+def _env_bool(key: str, default: bool) -> bool:
+    raw = os.getenv(key, "").strip().lower()
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    if raw in ("0", "false", "no", "off"):
+        return False
+    return default
+
+
 @dataclass
 class AgentConfig:
     name: str = "小忆"
@@ -22,6 +39,7 @@ class AgentConfig:
     model: str = "gpt-4o-mini"
     base_url: str = "https://api.openai.com/v1"
     api_key: str = ""
+    call_user: str = ""
     telegram_token: str = ""
     search_provider: str = "dry_run"
     search_api_key: str = ""
@@ -31,6 +49,10 @@ class AgentConfig:
     tiktok_client_secret: str = ""
     data_dir: Path = field(default_factory=lambda: BASE_DIR / "data")
     dry_run: bool = True
+    thinking_delay_min: float = 1.0
+    thinking_delay_max: float = 3.0
+    message_delay: float = 0.8
+    multi_reply_enabled: bool = True
     enabled_modules: tuple[str, ...] = (
         "brain",
         "console",
@@ -56,6 +78,7 @@ class AgentConfig:
             model=_env("AI_MODEL", "gpt-4o-mini"),
             base_url=_env("AI_BASE_URL", "https://api.openai.com/v1"),
             api_key=_env("AI_API_KEY", ""),
+            call_user=_env("AGENT_CALL_USER", ""),
             telegram_token=_env("TELEGRAM_BOT_TOKEN", ""),
             search_provider=_env("SEARCH_PROVIDER", "dry_run"),
             search_api_key=_env("SEARCH_API_KEY", ""),
@@ -65,6 +88,10 @@ class AgentConfig:
             tiktok_client_secret=_env("TIKTOK_CLIENT_SECRET", ""),
             data_dir=Path(_env("DATA_DIR", str(BASE_DIR / "data"))),
             dry_run=_env("DRY_RUN", "1") == "1",
+            thinking_delay_min=_env_float("AGENT_THINKING_MIN", 1.0),
+            thinking_delay_max=_env_float("AGENT_THINKING_MAX", 3.0),
+            message_delay=_env_float("AGENT_MESSAGE_DELAY", 0.8),
+            multi_reply_enabled=_env_bool("AGENT_MULTI_REPLY", True),
             enabled_modules=(
                 tuple(
                     name.strip()

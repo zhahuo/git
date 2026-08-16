@@ -6,6 +6,7 @@ import os
 from typing import Any
 
 from ..channels.telegram import TelegramChannel
+from ..channels.humanize import message_delay, split_reply, thinking_delay
 from ..module import Module
 
 logger = logging.getLogger(__name__)
@@ -91,9 +92,23 @@ class ChatService(Module):
             logger.exception("处理 Telegram 消息失败，chat_id=%s", chat_id)
             reply = FRIENDLY_ERROR
         try:
-            await self.channel.send_text(chat_id, reply)
+            await self._send_humanized(chat_id, reply)
         except Exception:
             logger.exception("发送 Telegram 回复失败，chat_id=%s", chat_id)
+
+    async def _send_humanized(self, chat_id: int, reply: str) -> None:
+        if self.config is None:
+            await self.channel.send_text(chat_id, reply)
+            return
+        await asyncio.sleep(thinking_delay(self.config))
+        if self.config.multi_reply_enabled:
+            segments = split_reply(reply)
+            for index, segment in enumerate(segments):
+                await self.channel.send_text(chat_id, segment)
+                if index < len(segments) - 1:
+                    await asyncio.sleep(message_delay(self.config))
+        else:
+            await self.channel.send_text(chat_id, reply)
 
     async def _poll_loop(self) -> None:
         while self.running:

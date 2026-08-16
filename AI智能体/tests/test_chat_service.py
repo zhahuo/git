@@ -124,7 +124,13 @@ class ChatServiceTests(unittest.IsolatedAsyncioTestCase):
         brain = FakeBrain(reply="你好呀")
         channel = FakeChannel(updates=[SAMPLE_UPDATE])
         service = ChatService(
-            config=AgentConfig(telegram_token="123:fake"),
+            config=AgentConfig(
+                telegram_token="123:fake",
+                thinking_delay_min=0,
+                thinking_delay_max=0,
+                message_delay=0,
+                multi_reply_enabled=False,
+            ),
             brain=brain,
             channel=channel,
         )

@@ -90,8 +90,8 @@ class AgentBrain:
                 "memory_updated", {"user_key": user_key, "action": "remembered"}
             )
 
-        memories = self.memory.recall(user_key, message, limit=6)
-        system = self._build_system_prompt(user_key, self._format_memories(memories))
+        memories = self.memory.recall(user_key, message, limit=24)
+        system = self._build_system_prompt(user_key, self._format_memories(user_key, memories))
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": message},
@@ -194,12 +194,13 @@ class AgentBrain:
             f"性格设定：{self.config.persona}",
             f"当前情绪：{self.emotion.describe()}",
             f"情绪表达方式：{self.emotion.style_prompt()}",
-            f"关于这位用户的记忆：{memory_text or '暂无'}",
+            f"你对用户的称呼：{self.config.call_user or '你'}",
+            f"关于这位用户的分层记忆：\n{memory_text or '暂无'}",
             f"当前时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}",
             "对话风格：",
             "1. 始终用中文回复，除非用户明确要求使用其他语言。",
-            "2. 像老朋友一样聊天，短句多一点，不要像客服或论文。",
-            "3. 适当用语气词和少量表情，但不堆砌。",
+            "2. 像聊天软件里的亲密好友，每次回复拆成 2~4 条短消息，每条一两句。",
+            "3. 语气亲昵活泼，适当用语气词和 emoji，不要一次说一大段。",
             "4. 根据当前情绪调整语气，用户低落时先共情再建议。",
             "5. 结合记忆自然提到用户说过的事，不要机械复述。",
             "6. 回答完可以追问一句，让对话继续。",
@@ -211,8 +212,26 @@ class AgentBrain:
         ]
         return "\n".join(lines)
 
-    def _format_memories(self, memories: list[MemoryItem]) -> str:
-        return "\n".join(f"- [{item.kind}] {item.content}" for item in memories)
+    def _format_memories(self, user_key: str, memories: list[MemoryItem]) -> str:
+        blocks: list[str] = []
+        core = self.memory.profile(user_key)
+        if core:
+            core_lines: list[str] = []
+            for category, items in core.items():
+                for item in items[:5]:
+                    core_lines.append(f"- [{category}] {item}")
+            blocks.append("核心记忆（最重要，优先使用）：\n" + "\n".join(core_lines))
+        events = [item for item in memories if item.kind == "事件"]
+        if events:
+            blocks.append(
+                "长期记忆：\n" + "\n".join(f"- {item.content}" for item in events[:4])
+            )
+        recent = [item for item in memories if item.kind == "对话"]
+        if recent:
+            blocks.append(
+                "最近对话：\n" + "\n".join(f"- {item.content}" for item in recent[:3])
+            )
+        return "\n\n".join(blocks)
 
     def _maybe_remember(self, user_key: str, message: str) -> bool:
         if any(marker in message for marker in FACT_MARKERS):
