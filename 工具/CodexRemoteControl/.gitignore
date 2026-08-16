@@ -1,0 +1,56 @@
+# Original app bundle (reference only)
+Codex.app/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+out/
+dist/
+release/
+
+# Local runtime data
+.data/
+cache/
+official-user-data/
+reports/
+
+# Upstream ASAR extracts and build-time copies (all generated)
+src/
+!gateway/src/
+!gateway/src/**
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+config.yaml
+power-control/config.json
+power-control/*.log
+deploy-password.txt
+
+# Temporary files
+*.tmp
+*.temp
+
+# Native binaries (downloaded via package manager in CI)
+resources/bin/
+resources/codex
+resources/codex.exe
+.claude/

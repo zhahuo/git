@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>远程控制</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1115;
+      --panel: #171a21;
+      --line: #2a2f3a;
+      --text: #e8ecf2;
+      --muted: #8b93a3;
+      --danger: #ff5d5d;
+      --ok: #35c07e;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: system-ui, "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+    .app { height: 100vh; display: flex; flex-direction: column; }
+    header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 { font-size: 20px; margin: 0 0 2px; }
+    .sub { color: var(--muted); font-size: 12px; }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+    .tab {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #10131a;
+      color: var(--muted);
+      padding: 10px 0;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .tab.active { background: #22304a; color: var(--text); border-color: #3b5b8c; }
+    main { flex: 1; min-height: 0; }
+    .power-panel { height: 100%; overflow-y: auto; padding: 16px; }
+    .codex-panel { height: 100%; }
+    iframe { width: 100%; height: 100%; border: 0; background: var(--bg); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #10131a;
+      color: var(--text);
+      font-size: 16px;
+    }
+    .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      padding: 14px 12px;
+      font-size: 16px;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-danger { background: #b3272e; }
+    .btn-warn { background: #b07a1f; }
+    .btn-neutral { background: #2b3240; }
+    .status { margin-top: 14px; min-height: 20px; font-size: 14px; }
+    .ok { color: var(--ok); }
+    .err { color: var(--danger); }
+    .info { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .info h2 { font-size: 15px; color: var(--text); margin: 0 0 8px; }
+    .info code {
+      color: var(--text);
+      background: #10131a;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    .info a { color: #7ab2ff; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>远程控制</h1>
+      <div class="sub">Codex 与电源控制</div>
+    </header>
+    <div class="tabs">
+      <button id="tab-codex" class="tab active">Codex</button>
+      <button id="tab-power" class="tab">电源</button>
+    </div>
+    <main>
+      <div id="codex-panel" class="codex-panel">
+        <iframe id="codex-frame" title="Codex"></iframe>
+      </div>
+      <div id="power-panel" class="power-panel" hidden>
+        <div class="card">
+          <label for="password">访问密码</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="请输入密码" />
+          <div class="actions">
+            <button class="btn-danger" data-action="shutdown">关机</button>
+            <button class="btn-warn" data-action="restart">重启</button>
+            <button class="btn-neutral" data-action="sleep">睡眠</button>
+            <button class="btn-neutral" data-action="hibernate">休眠</button>
+          </div>
+          <div id="status" class="status"></div>
+        </div>
+
+        <div class="card info">
+          <h2>Tailscale 手机配置</h2>
+          <p>手机安装 <a href="https://tailscale.com/download" target="_blank" rel="noreferrer">Tailscale</a>，登录和电脑相同的账号。</p>
+          <p>登录后打开：<code>http://电脑TailscaleIP:3737</code></p>
+        </div>
+
+        <div class="card info">
+          <h2>开机（网络唤醒）</h2>
+          <p>完全关机后这个页面会连不上电脑，需要用手机上的“Wake on LAN / 网络唤醒”App 发送唤醒包。</p>
+          <p>Wi-Fi MAC：<code>C0-A8-10-DA-AD-B3</code></p>
+          <p>有线网卡 MAC：<code>B0-25-AA-93-0F-C7</code></p>
+          <p>睡眠状态用 Wi-Fi MAC；完全关机唤醒需要插网线，并在 BIOS 中开启 Wake on LAN。</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const codexTab = document.getElementById("tab-codex");
+    const powerTab = document.getElementById("tab-power");
+    const codexPanel = document.getElementById("codex-panel");
+    const powerPanel = document.getElementById("power-panel");
+    const codexFrame = document.getElementById("codex-frame");
+    const statusEl = document.getElementById("status");
+    const buttons = document.querySelectorAll("button[data-action]");
+
+    function activate(name) {
+      if (name === "codex") {
+        codexTab.classList.add("active");
+        powerTab.classList.remove("active");
+        codexPanel.hidden = false;
+        powerPanel.hidden = true;
+        if (!codexFrame.src) {
+          codexFrame.src = location.protocol + "//" + location.hostname + ":3737/";
+        }
+      } else {
+        powerTab.classList.add("active");
+        codexTab.classList.remove("active");
+        codexPanel.hidden = true;
+        powerPanel.hidden = false;
+      }
+    }
+
+    codexTab.addEventListener("click", () => activate("codex"));
+    powerTab.addEventListener("click", () => activate("power"));
+
+    async function run(action) {
+      const password = document.getElementById("password").value.trim();
+      statusEl.className = "status";
+      statusEl.textContent = "正在发送...";
+      try {
+        const res = await fetch("/api/power", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action, password })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || ("HTTP " + res.status));
+        statusEl.className = "status ok";
+        statusEl.textContent = "已执行：" + action;
+      } catch (e) {
+        statusEl.className = "status err";
+        statusEl.textContent = "失败：" + (e.message || e);
+      }
+    }
+
+    buttons.forEach(btn => btn.addEventListener("click", () => run(btn.dataset.action)));
+    activate("codex");
+  </script>
+</body>
+</html>
