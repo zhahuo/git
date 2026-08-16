@@ -24,23 +24,17 @@ def split_reply(text: str, max_chars: int = 120, max_segments: int = 4) -> list[
     text = text.strip()
     if not text:
         return []
-    if len(text) <= max_chars:
+    parts = re.split(r"(?<=[。！？!?\n；;，,])", text)
+    segments = [part.strip() for part in parts if part.strip()]
+    if not segments:
         return [text]
-    parts = re.split(r"(?<=[。！？!?\n])", text)
-    segments: list[str] = []
-    buffer = ""
-    for part in parts:
-        if buffer and len(buffer) + len(part) > max_chars:
-            segments.append(buffer.strip())
-            buffer = part
-        else:
-            buffer += part
-    if buffer.strip():
-        segments.append(buffer.strip())
-    result = [segment for segment in segments if segment]
-    if not result:
-        return [text]
-    if len(result) > max_segments:
-        result = result[:max_segments]
-        result[-1] += "..."
-    return result
+    final: list[str] = []
+    for segment in segments:
+        while len(segment) > max_chars and len(final) < max_segments:
+            final.append(segment[:max_chars])
+            segment = segment[max_chars:]
+        final.append(segment)
+    if len(final) > max_segments:
+        final = final[:max_segments]
+        final[-1] += "..."
+    return final
