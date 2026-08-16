@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 智能体仪表盘</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>AI 智能体</h1>
+      <p id="updatedAt">等待数据...</p>
+    </div>
+    <span id="connState" class="conn-state">连接中</span>
+  </header>
+
+  <main>
+    <section class="stats-grid" aria-label="概览数据">
+      <article class="stat-card">
+        <span class="stat-label">总 Token</span>
+        <strong id="statTokens">-</strong>
+        <small id="statCalls">- 次调用</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">今日对话</span>
+        <strong id="statToday">-</strong>
+        <small>conversations</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">当前情绪</span>
+        <strong id="statMood">-</strong>
+        <small id="statMoodDim">-</small>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">模块状态</span>
+        <strong id="statModule">-</strong>
+        <small id="statStatus">-</small>
+      </article>
+    </section>
+
+    <nav class="tabs" aria-label="图表切换">
+      <button class="tab active" data-tab="tokens">Token</button>
+      <button class="tab" data-tab="emotions">情绪</button>
+      <button class="tab" data-tab="memory">记忆</button>
+    </nav>
+
+    <section id="chartTokens" class="chart-panel active">
+      <div class="panel-title">
+        <h2>Token 消耗趋势</h2>
+        <span class="legend-dot dot-total"></span><span>总消耗</span>
+        <span class="legend-dot dot-ok"></span><span>成功调用</span>
+      </div>
+      <div id="chartTokensEl" class="chart"></div>
+    </section>
+
+    <section id="chartEmotions" class="chart-panel">
+      <div class="panel-title">
+        <h2>情绪曲线</h2>
+        <span class="legend-dot dot-v"></span><span>愉悦度</span>
+        <span class="legend-dot dot-a"></span><span>激活度</span>
+        <span class="legend-dot dot-d"></span><span>支配度</span>
+      </div>
+      <div id="chartEmotionsEl" class="chart"></div>
+    </section>
+
+    <section id="chartMemory" class="chart-panel">
+      <div class="panel-title">
+        <h2>记忆量变化</h2>
+        <span class="legend-dot dot-f"></span><span>事实</span>
+        <span class="legend-dot dot-e"></span><span>片段</span>
+        <span class="legend-dot dot-c"></span><span>对话</span>
+      </div>
+      <div id="chartMemoryEl" class="chart"></div>
+    </section>
+
+    <section class="list-section">
+      <div class="panel-title">
+        <h2>最近对话</h2>
+        <span id="convCount" class="count-badge">0</span>
+      </div>
+      <ul id="listConversations" class="data-list"></ul>
+    </section>
+
+    <section class="list-section">
+      <div class="panel-title">
+        <h2>最近模型调用</h2>
+        <span id="llmCount" class="count-badge">0</span>
+      </div>
+      <ul id="listLlm" class="data-list"></ul>
+    </section>
+
+    <section class="list-section">
+      <div class="panel-title">
+        <h2>最近发布任务</h2>
+        <span id="pubCount" class="count-badge">0</span>
+      </div>
+      <ul id="listPublish" class="data-list"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <span>data/monitor.db</span>
+    <span>每秒刷新</span>
+  </footer>
+
+  <script src="static/echarts.min.js"></script>
+  <script>
+    if (typeof echarts === "undefined") {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"><\/script>');
+    }
+  </script>
+  <script src="static/app.js"></script>
+</body>
+</html>

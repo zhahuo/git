@@ -69,6 +69,7 @@ class AgentBusTests(unittest.IsolatedAsyncioTestCase):
                 "content_ready",
                 "publish_requested",
                 "publish_finished",
+                "llm_call",
             ),
         )
 

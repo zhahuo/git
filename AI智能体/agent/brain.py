@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from datetime import datetime
 
 from .bus import AgentBus
@@ -123,7 +124,25 @@ class AgentBrain:
         self, messages: list[dict[str, object]], user_key: str
     ) -> str:
         for _ in range(4):
+            started = time.perf_counter()
             assistant = self.llm.chat(messages, temperature=0.85, tools=self.tools.schemas())
+            latency_ms = int(round((time.perf_counter() - started) * 1000))
+            prompt_tokens = self._estimate_prompt_tokens(messages)
+            completion_tokens = self._estimate_tokens(
+                assistant.get("content") or ""
+            )
+            await self.bus.apublish(
+                "llm_call",
+                {
+                    "user_key": user_key,
+                    "model": self.config.model,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_tokens + completion_tokens,
+                    "latency_ms": latency_ms,
+                    "ok": True,
+                },
+            )
             if assistant.get("tool_calls"):
                 messages.append(assistant)
                 for call in assistant["tool_calls"]:
@@ -169,6 +188,19 @@ class AgentBrain:
             content = (assistant.get("content") or "").strip()
             return content or "我暂时不知道该怎么回答。"
         return "我思考得有点久，先回到这里。"
+
+    @staticmethod
+    def _estimate_tokens(text: object) -> int:
+        return len(str(text or "")) // 3
+
+    @staticmethod
+    def _estimate_prompt_tokens(messages: list[dict[str, object]]) -> int:
+        total = 0
+        for message in messages:
+            content = message.get("content")
+            if content:
+                total += len(str(content))
+        return total // 3
 
     def _fallback_reply(self, user_key: str, message: str) -> str:
         mood = self.emotion.mood_label()

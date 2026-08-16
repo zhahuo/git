@@ -11,6 +11,7 @@ EVENT_TYPES = (
     "content_ready",
     "publish_requested",
     "publish_finished",
+    "llm_call",
 )
 
 Subscriber = Callable[[dict[str, Any]], Awaitable[None]]

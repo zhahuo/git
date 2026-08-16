@@ -9,11 +9,13 @@ from .bus import AgentBus
 from .channels.console import ConsoleChannel
 from .channels.telegram import TelegramChannel
 from .config import AgentConfig
+from .dashboard import DashboardModule
 from .module import Module
 from .services.chat_service import ChatService
 from .services.content_service import ContentService
 from .services.emotion_service import EmotionService
 from .services.memory_service import MemoryService
+from .services.monitor_service import MonitorService
 from .services.publish_service import PublishService
 from .services.web_service import WebService
 
@@ -135,4 +137,8 @@ def build_default_modules(
         modules.append(ContentService(config))
     if "publish" in enabled:
         modules.append(PublishService(config))
+    if "monitor" in enabled:
+        modules.append(MonitorService(config))
+    if "dashboard" in enabled:
+        modules.append(DashboardModule(config))
     return modules

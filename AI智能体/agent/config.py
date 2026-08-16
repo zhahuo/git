@@ -62,6 +62,8 @@ class AgentConfig:
         "chat_service",
         "content",
         "publish",
+        "monitor",
+        "dashboard",
     )
 
     @classmethod
@@ -107,6 +109,8 @@ class AgentConfig:
                     "chat_service",
                     "content",
                     "publish",
+                    "monitor",
+                    "dashboard",
                 )
             ),
         )
