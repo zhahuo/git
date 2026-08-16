@@ -573,8 +573,138 @@
           ]
         }
       ]
-    }
-  ];
+    },
+
+    /* =====================================================================
+     * 大型综合基地（新图，超大场景）
+     * =================================================================== */
+    {
+      id: 'mega-base',
+      name: '大型综合基地',
+      codename: 'MEGA BASE',
+      subtitle: 'JOINT OPERATIONS COMPLEX',
+      half: 44,
+      theme: {
+        sky: 'industrial-dusk',
+        fogColor: '#5a6872',
+        fogDensity: 0.010,
+        sunColor: '#ffd9a0',
+        sunDirection: [0.5, 0.7, 0.45],
+        ambient: '#aab6c0',
+        minimapBg: 'rgba(8,12,16,.82)',
+        gridColor: 'rgba(120,140,160,.10)'
+      },
+      perimeter: { wallHeight: 14, thickness: 1.4, fenceHeight: 3.6 },
+      playerSpawns: [
+        { id: 'south-gate', label: '南大门', x: 0, z: 40, yaw: 0, floorY: 0 },
+        { id: 'east-gate', label: '东区入口', x: 38, z: 24, yaw: -PI_2, floorY: 0 }
+      ],
+      defaultSpawn: 0,
+      enemies: {
+        count: 10,
+        names: DEFAULT_ENEMY_NAMES.slice(),
+        grace: 3.0,
+        spawns: [
+          { routeIndex: 0, x: 0, z: -34, floorY: 0, label: '北区中央' },
+          { routeIndex: 1, x: -30, z: -26, floorY: 0, label: '西北仓储' },
+          { routeIndex: 2, x: 30, z: -26, floorY: 0, label: '东北仓储' },
+          { routeIndex: 3, x: 0, z: -4, floorY: 3.2, label: '中央二层平台' },
+          { routeIndex: 4, x: -28, z: 4, floorY: 0, label: '西侧通道' },
+          { routeIndex: 5, x: 28, z: 4, floorY: 0, label: '东侧通道' },
+          { routeIndex: 6, x: -16, z: 30, floorY: 0, label: '西南货场' },
+          { routeIndex: 7, x: 16, z: 30, floorY: 0, label: '东南货场' },
+          { routeIndex: 8, x: -8, z: 14, floorY: 0, label: '中南部' },
+          { routeIndex: 9, x: 8, z: -18, floorY: 0, label: '北区游走' }
+        ]
+      },
+      routes: [
+        { id: 'north-central', label: '北区中央', floorY: 0, enemyIndexes: [0], waypoints: [[0,-34],[0,-28],[0,-22],[0,-16],[0,-10],[4,-6]] },
+        { id: 'northwest-storage', label: '西北仓储', floorY: 0, enemyIndexes: [1], waypoints: [[-30,-26],[-26,-24],[-22,-22],[-26,-18],[-30,-20],[-34,-24]] },
+        { id: 'northeast-storage', label: '东北仓储', floorY: 0, enemyIndexes: [2], waypoints: [[30,-26],[26,-24],[22,-22],[26,-18],[30,-20],[34,-24]] },
+        { id: 'central-deck', label: '中央二层平台', floorY: 3.2, enemyIndexes: [3], waypoints: [[-2,-8],[-1,-4],[2,0],[3,4],[1,7],[-3,4],[-4,-2]] },
+        { id: 'west-lane', label: '西侧通道', floorY: 0, enemyIndexes: [4], waypoints: [[-28,4],[-24,2],[-20,0],[-24,-2],[-28,-4],[-32,-2]] },
+        { id: 'east-lane', label: '东侧通道', floorY: 0, enemyIndexes: [5], waypoints: [[28,4],[24,2],[20,0],[24,-2],[28,-4],[32,-2]] },
+        { id: 'southwest-yard', label: '西南货场', floorY: 0, enemyIndexes: [6], waypoints: [[-16,30],[-10,31],[-4,30],[0,26],[4,28],[-6,34],[-16,32]] },
+        { id: 'southeast-yard', label: '东南货场', floorY: 0, enemyIndexes: [7], waypoints: [[16,30],[10,31],[4,30],[0,26],[-4,28],[6,34],[16,32]] },
+        { id: 'south-mid', label: '中南部', floorY: 0, enemyIndexes: [8], waypoints: [[-8,14],[-4,12],[0,14],[4,12],[8,14],[4,18],[0,16]] },
+        { id: 'roamer', label: '游走巡逻', floorY: 0, enemyIndexes: [9], waypoints: [[8,-18],[12,-10],[6,-6],[10,2],[4,8],[12,12],[8,18]] }
+      ],
+      cover: [
+        /* 中央二层复合体 */
+        B(0.6, 4.2, 16, -6, 0, 0, 'concrete', { minimap: { color: '#3b4147' } }),
+        B(0.6, 4.2, 16, 6, 0, 0, 'concrete', { minimap: { color: '#3b4147' } }),
+        B(12, 4.2, 0.6, 0, 0, -8, 'concrete', { minimap: { color: '#3b4147' } }),
+        B(12, 4.2, 0.6, 0, 0, 8, 'concrete', { minimap: { color: '#3b4147' } }),
+        B(12, 0.42, 16, 0, 3.2, 0, 'concrete', { collide: false, ground: true, ceiling: true, minimap: { color: '#4a525a' } }),
+        B(12, 1.05, 0.22, 0, 3.2, -8, 'darkMetal'),
+        B(0.22, 1.05, 16, -6, 3.2, 0, 'darkMetal'),
+        B(0.22, 1.05, 16, 6, 3.2, 0, 'darkMetal'),
+        B(12, 1.05, 0.22, 0, 3.2, 8, 'darkMetal'),
+        /* 北区集装箱群 */
+        CT(-12, 0, -28, 0, '#8f9ba0'), CT(-12, 0, -18, 0, '#a9b6ba'),
+        CT(-12, 0, -8, 0, '#c6cdd1'), CT(-12, 2.85, -18, 0, '#8f9ba0'),
+        CT(12, 0, -28, 0, '#8f9ba0'), CT(12, 0, -18, 0, '#a9b6ba'),
+        CT(12, 0, -8, 0, '#c6cdd1'), CT(12, 2.85, -18, 0, '#8f9ba0'),
+        CT(20, 0, -30, 0, '#a9b6ba'), CT(20, 0, -20, 0, '#c6cdd1'),
+        CT(20, 0, -10, 0, '#d8dde0'), CT(20, 2.85, -20, 0, '#a9b6ba'),
+        CT(-20, 0, -30, 0, '#a9b6ba'), CT(-20, 0, -20, 0, '#c6cdd1'),
+        CT(-20, 0, -10, 0, '#d8dde0'), CT(-20, 2.85, -20, 0, '#a9b6ba'),
+        /* 东西通道掩体 */
+        B(0.5, 1.8, 5, -27, 0, 0, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, -27, 0, 10, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, 27, 0, 0, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, 27, 0, 10, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, -27, 0, -10, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, 27, 0, -10, 'concrete', { minimap: { color: '#4a525a' } }),
+        /* 南部货场隔离墩 */
+        JB(-14, 24, 0), JB(-10, 24, 0), JB(-6, 24, 0),
+        JB(14, 24, 0), JB(10, 24, 0), JB(6, 24, 0),
+        JB(-14, -34, 0), JB(-10, -34, 0), JB(-6, -34, 0),
+        JB(14, -34, 0), JB(10, -34, 0), JB(6, -34, 0),
+        /* 木箱堆 */
+        CR(-16, 0, 26, 0.5), CR(-15, 0, 27, 0.9), CR(-14, 0, 26, 0.3),
+        CR(16, 0, 26, 0.5), CR(15, 0, 27, 0.9), CR(14, 0, 26, 0.3),
+        CR(-24, 0, 12, 0.6), CR(-23, 0, 13, 0.2),
+        CR(24, 0, 12, 0.6), CR(23, 0, 13, 0.2),
+        CR(4, 0, 20, 0.7), CR(5, 0, 21, 0.3),
+        CR(-4, 0, 20, 0.7), CR(-5, 0, 21, 0.3),
+        /* 油桶堆 */
+        BR(-18, 0, -34), BR(-17.6, 0, -33.7), BR(-18.4, 0, -33.6),
+        BR(18, 0, -34), BR(18.4, 0, -33.7), BR(17.6, 0, -33.6),
+        BR(-18, 0, 34), BR(-17.6, 0, 34.3), BR(-18.4, 0, 34.4),
+        BR(18, 0, 34), BR(18.4, 0, 34.3), BR(17.6, 0, 34.4),
+        BR(0, 0, -38), BR(0.4, 0, -37.7), BR(-0.4, 0, -37.6),
+        BR(0, 0, 38), BR(0.4, 0, 38.3), BR(-0.4, 0, 38.4),
+
+        /* 大型基地扩充掩体 */
+        CT(-30, 0, 18, 0, '#8f9ba0'), CT(-30, 0, 28, 0, '#a9b6ba'),
+        CT(30, 0, 18, 0, '#8f9ba0'), CT(30, 0, 28, 0, '#a9b6ba'),
+        CT(-38, 0, -6, 0, '#c6cdd1'), CT(38, 0, -6, 0, '#c6cdd1'),
+        B(0.5, 1.8, 5, -34, 0, -20, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, 34, 0, -20, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, -34, 0, 20, 'concrete', { minimap: { color: '#4a525a' } }),
+        B(0.5, 1.8, 5, 34, 0, 20, 'concrete', { minimap: { color: '#4a525a' } }),
+        CR(-34, 0, -30, 0.4), CR(-33, 0, -29, 0.8),
+        CR(34, 0, -30, 0.4), CR(33, 0, -29, 0.8),
+        CR(-34, 0, 30, 0.5), CR(-33, 0, 31, 0.9),
+        CR(34, 0, 30, 0.5), CR(33, 0, 31, 0.9),
+        BR(-30, 0, -38), BR(-29.6, 0, -37.7), BR(-30.4, 0, -37.6),
+        BR(30, 0, -38), BR(30.4, 0, -37.7), BR(29.6, 0, -37.6)
+      ],
+      ramps: [
+        {
+          id: 'central-deck-ramp',
+          label: '中央二层坡道',
+          x: 0, z: 11.5, width: 4, length: 6, baseY: 0, topY: 3.2,
+          direction: '-Z',
+          minimap: { w: 4, d: 6, color: '#9aa6aa' },
+          sideWalls: [
+            B(0.26, 3.6, 6, -2.2, 0, 11.5, 'concrete'),
+            B(0.26, 3.6, 6, 2.2, 0, 11.5, 'concrete')
+          ]
+        }
+      ]
+    }  ];
 
   /* =====================================================================
    * 公开接口
