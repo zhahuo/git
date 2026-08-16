@@ -37,4 +37,4 @@ def split_reply(text: str, max_chars: int = 120, max_segments: int = 4) -> list[
     if len(final) > max_segments:
         final = final[:max_segments]
         final[-1] += "..."
-    return final
+    return [segment.rstrip("，,；; ") for segment in final if segment.rstrip("，,；; ")]

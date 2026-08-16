@@ -13,6 +13,7 @@ class HumanizeTests(unittest.TestCase):
     def test_split_reply_by_comma(self) -> None:
         parts = split_reply("嘿嘿，我也这么觉得，想你了")
         self.assertGreaterEqual(len(parts), 2)
+        self.assertFalse(any(part.endswith(("，", ",")) for part in parts))
 
 
 if __name__ == "__main__":
