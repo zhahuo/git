@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+data/usage.db
+data/usage.db-shm
+data/usage.db-wal

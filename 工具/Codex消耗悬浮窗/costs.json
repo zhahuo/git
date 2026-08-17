@@ -1,0 +1,10 @@
+{
+  "deepseek-v4-flash": 0.001,
+  "deepseek-v4-pro": 0.002,
+  "glm-5.1": 0.002,
+  "glm-5.2": 0.002,
+  "kimi-k2.7-code": 0.002,
+  "grok-4.5": 0.003,
+  "gpt-5.6-luna": 0.005,
+  "mimo-v2.5-pro": 0.002
+}
