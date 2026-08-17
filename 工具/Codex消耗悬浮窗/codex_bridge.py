@@ -59,6 +59,9 @@ def main():
     try:
         while True:
             codex_running = is_codex_running()
+            if codex_running and widget is not None and widget.poll() is not None:
+                widget = None
+                log("widget exited, will restart")
             if codex_running and widget is None:
                 widget = subprocess.Popen(
                     [str(PYTHONW if PYTHONW.exists() else PYTHON), str(WIDGET)],

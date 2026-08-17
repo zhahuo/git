@@ -1,9 +1,11 @@
 import tkinter as tk
+from pathlib import Path
 from tkinter import font as tkfont
 
 from usage_tracker import UsageTracker
 
 
+BASE_DIR = Path(__file__).resolve().parent
 TRANSPARENT = "#010203"
 BG = "#EAF7FF"
 CARD = "#FFFFFF"
@@ -69,6 +71,14 @@ class CostWidget:
             return 1200
 
     def _build_ui(self):
+        for attr in ("close_btn", "mini_btn"):
+            btn = getattr(self, attr, None)
+            if btn is not None:
+                try:
+                    btn.destroy()
+                except tk.TclError:
+                    pass
+
         rounded_rect(
             self.canvas,
             2, 2, WIDTH - 2, HEIGHT - 2,
@@ -258,9 +268,18 @@ class CostWidget:
 
 def main():
     global root
-    root = tk.Tk()
-    CostWidget(root)
-    root.mainloop()
+    try:
+        root = tk.Tk()
+        CostWidget(root)
+        root.mainloop()
+    except Exception as exc:
+        import traceback
+
+        error_file = BASE_DIR / "data" / "widget-error.log"
+        error_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(error_file, "a", encoding="utf-8") as f:
+            f.write(traceback.format_exc())
+        raise
 
 
 if __name__ == "__main__":
