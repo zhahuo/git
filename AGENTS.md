@@ -2,6 +2,8 @@
 
 本仓库用于存放我的所有项目，GitHub 远程仓库为 https://github.com/zhahuo/git.git，默认分支 main。
 
+项目完成后直接提交并推送到远端仓库，不再需要把项目额外复制到桌面 Codex 文件夹。
+
 ## 规则
 
 1. 仓库内任何项目发生更新后，必须提交到本地 Git 仓库，并推送到 GitHub 的 main 分支。
