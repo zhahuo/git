@@ -9,10 +9,10 @@
 - 长期记忆：用本地数据库保存对话、重要事件、用户偏好。
 - 情绪系统：根据对话内容产生情绪变化，情绪会影响说话语气，并且会随时间慢慢平复。
 - 联网能力：内置网页搜索和网页正文读取工具，默认演示模式，不依赖外部账号。
-- 聊天渠道：Telegram 官方 Bot API，以及控制台直接对话。
+- 聊天渠道：Telegram 官方 Bot API、QQ（NapCat + OneBot11）、控制台直接对话。
 - 短视频发布：抖音和 TikTok 的官方 API 适配骨架，默认演示模式，不会真的发视频。
 - 多模块并行：大脑、记忆、情绪、联网、聊天、内容、发布 7 个模块在同一个事件总线上同时运行。
-- 零第三方依赖：只使用 Python 标准库，可以直接运行。
+- 基础运行只使用 Python 标准库；QQ 对话需额外安装 `ncatbot`。
 
 ## 快速开始
 
@@ -75,10 +75,34 @@ python -m agent run --channel telegram
 
 未配置 `TELEGRAM_BOT_TOKEN` 时，聊天服务会保持运行但暂不轮询。
 
+## 启动 QQ 对话
+
+QQ 对话使用个人 QQ 号 + NapCat（OneBot11 协议端）+ ncatbot（Python SDK）：
+
+```bash
+python -m pip install -r requirements.txt
+powershell -ExecutionPolicy Bypass -File scripts\setup_napcat.ps1
+```
+
+安装脚本会下载 NapCat 一键包并启动安装器；完成 QQ 扫码登录后，在 NapCat WebUI（`http://127.0.0.1:6099`）确认 OneBot11 WebSocket 服务端口为 `3001`。
+
+然后在 `.env` 里设置：
+
+```text
+QQ_ENABLED=1
+QQ_DRY_RUN=1
+QQ_WS_URL=ws://127.0.0.1:3001
+QQ_BOT_QQ=机器人QQ号
+QQ_ALLOWED_USERS=允许私聊的QQ号
+QQ_ALLOWED_GROUPS=允许回复的群号
+```
+
+保持 `QQ_DRY_RUN=1` 先验证连通，确认日志能收到消息后再改成 `0` 真发。私聊和群聊白名单为空时，QQ 模块默认不回复任何会话。
+
 ## 多模块并行流程
 
 ```text
-Telegram/控制台消息
+Telegram/QQ/控制台消息
     → 事件总线 user_message
         → 大脑：情绪 + 记忆 + 模型回复
         → 记忆服务：落库、压缩
@@ -99,7 +123,7 @@ agent/
   bus.py          事件总线
   runner.py       多模块运行器
   modules.py      模块注册与装配
-  services/       记忆、情绪、联网、聊天、内容、发布服务
+  services/       记忆、情绪、联网、聊天、QQ、微信、内容、发布服务
   emotion.py      情绪状态与情绪分析
   memory.py       本地长期记忆
   llm.py          模型接口
@@ -120,4 +144,4 @@ scripts/          冒烟测试等辅助脚本
 
 ## 平台合规说明
 
-只建议通过各平台官方 API 接入。个人微信、个人抖音账号的自动化操作通常违反平台服务条款，容易导致封号或法律风险，所以本项目默认不提供这类实现。
+只建议通过各平台官方 API 接入。个人微信、个人 QQ、个人抖音账号的自动化操作通常违反平台服务条款，容易导致封号或法律风险；QQ 模块默认 `QQ_DRY_RUN=1`，请确认用途合规后再切换为真实发送。

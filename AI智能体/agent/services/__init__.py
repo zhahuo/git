@@ -5,6 +5,7 @@ from .content_service import ContentService
 from .emotion_service import EmotionService
 from .memory_service import MemoryService
 from .publish_service import PublishService, PublishStore
+from .qq_service import QQService
 from .web_service import WebService
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "MemoryService",
     "PublishService",
     "PublishStore",
+    "QQService",
     "WebService",
 ]

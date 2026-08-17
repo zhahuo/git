@@ -46,6 +46,15 @@ class AgentConfig:
     wechat_enabled: bool = False
     wechat_dry_run: bool = True
     wechat_allowed_chats: str = ""
+    qq_enabled: bool = False
+    qq_dry_run: bool = True
+    qq_ws_url: str = "ws://127.0.0.1:3001"
+    qq_bot_qq: str = ""
+    qq_allowed_users: str = ""
+    qq_allowed_groups: str = ""
+    qq_reply_private: bool = True
+    qq_reply_group_mention: bool = True
+    qq_reply_group_all: bool = False
     douyin_client_key: str = ""
     douyin_client_secret: str = ""
     tiktok_client_key: str = ""
@@ -64,6 +73,7 @@ class AgentConfig:
         "web_service",
         "chat_service",
         "wechat",
+        "qq",
         "content",
         "publish",
         "monitor",
@@ -92,6 +102,15 @@ class AgentConfig:
             wechat_enabled=_env_bool("WECHAT_ENABLED", False),
             wechat_dry_run=_env_bool("WECHAT_DRY_RUN", True),
             wechat_allowed_chats=_env("WECHAT_ALLOWED_CHATS", ""),
+            qq_enabled=_env_bool("QQ_ENABLED", False),
+            qq_dry_run=_env_bool("QQ_DRY_RUN", True),
+            qq_ws_url=_env("QQ_WS_URL", "ws://127.0.0.1:3001"),
+            qq_bot_qq=_env("QQ_BOT_QQ", ""),
+            qq_allowed_users=_env("QQ_ALLOWED_USERS", ""),
+            qq_allowed_groups=_env("QQ_ALLOWED_GROUPS", ""),
+            qq_reply_private=_env_bool("QQ_REPLY_PRIVATE", True),
+            qq_reply_group_mention=_env_bool("QQ_REPLY_GROUP_MENTION", True),
+            qq_reply_group_all=_env_bool("QQ_REPLY_GROUP_ALL", False),
             douyin_client_key=_env("DOUYIN_CLIENT_KEY", ""),
             douyin_client_secret=_env("DOUYIN_CLIENT_SECRET", ""),
             tiktok_client_key=_env("TIKTOK_CLIENT_KEY", ""),
@@ -116,6 +135,7 @@ class AgentConfig:
                     "web_service",
                     "chat_service",
                     "wechat",
+                    "qq",
                     "content",
                     "publish",
                     "monitor",

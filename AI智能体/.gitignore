@@ -2,5 +2,11 @@ __pycache__/
 *.py[cod]
 .env
 config.json
+config.yaml
 data/*.db
 data/*.db-*
+.tmp_ncatbot/
+wechatauto_logs/
+plugins/
+tools/NapCat/
+logs/
