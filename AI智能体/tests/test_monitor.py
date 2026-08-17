@@ -54,6 +54,9 @@ class MonitorStoreTests(unittest.TestCase):
                         "emotions",
                         "memory_stats",
                         "publish_tasks",
+                        "logs",
+                        "bus_events",
+                        "module_status",
                     }
                     self.assertTrue(expected.issubset(tables))
                     row = conn.execute(
@@ -72,6 +75,68 @@ class MonitorStoreTests(unittest.TestCase):
                 self.assertEqual(summary["emotions"], 1)
                 self.assertEqual(summary["memory_stats"], 1)
                 self.assertEqual(summary["publish_tasks"], 1)
+            finally:
+                store.close()
+
+    def test_debug_tables_record_and_upsert(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            store = MonitorStore(Path(tmp) / "monitor.db")
+            try:
+                log_id = store.record_log("WARNING", "agent.brain", "测试日志")
+                event_id = store.record_event(
+                    "user_message", {"user_key": "u1", "message": "你好"}
+                )
+                self.assertGreater(log_id, 0)
+                self.assertGreater(event_id, 0)
+
+                store.upsert_module_status("brain", "running", "BrainModule")
+                store.upsert_module_status("brain", "stopped", "BrainModule")
+                conn = sqlite3.connect(str(store.db_path))
+                try:
+                    row = conn.execute(
+                        "SELECT status, detail FROM module_status WHERE module = ?",
+                        ("brain",),
+                    ).fetchone()
+                    self.assertEqual(row, ("stopped", "BrainModule"))
+                    log_row = conn.execute(
+                        "SELECT level, logger, message FROM logs WHERE id = ?",
+                        (log_id,),
+                    ).fetchone()
+                    self.assertEqual(
+                        log_row, ("WARNING", "agent.brain", "测试日志")
+                    )
+                    event_row = conn.execute(
+                        "SELECT event_type, payload_json FROM bus_events WHERE id = ?",
+                        (event_id,),
+                    ).fetchone()
+                    self.assertEqual(event_row[0], "user_message")
+                    self.assertIn("你好", event_row[1])
+                finally:
+                    conn.close()
+            finally:
+                store.close()
+
+    def test_debug_cleanup_removes_old_records(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            store = MonitorStore(Path(tmp) / "monitor.db")
+            try:
+                store.record_log(
+                    "INFO",
+                    "agent",
+                    "旧日志",
+                    created_at=self._old_iso(31),
+                )
+                store.record_log("INFO", "agent", "新日志")
+                deleted = store.cleanup(days=30)
+                self.assertGreaterEqual(deleted, 1)
+                conn = sqlite3.connect(str(store.db_path))
+                try:
+                    count = conn.execute(
+                        "SELECT COUNT(*) FROM logs WHERE message = '新日志'"
+                    ).fetchone()[0]
+                finally:
+                    conn.close()
+                self.assertEqual(count, 1)
             finally:
                 store.close()
 

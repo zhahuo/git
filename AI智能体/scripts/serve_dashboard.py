@@ -10,101 +10,122 @@ from typing import Any
 from agent.config import AgentConfig
 from agent.dashboard import (
     _db_path,
+    fetch_bus_events,
     fetch_conversations,
     fetch_emotions,
     fetch_llm_calls,
+    fetch_logs,
     fetch_memory_stats,
+    fetch_module_statuses,
     fetch_publish_tasks,
     fetch_summary,
+    public_config,
 )
 
-PORT = int(os.getenv("DASHBOARD_PORT", "8765"))
-CONFIG = AgentConfig.load(Path("config.json"))
-DB = _db_path(CONFIG)
+DASHBOARD_DIR = Path(__file__).resolve().parent.parent / "dashboard"
+STATIC_DIR = DASHBOARD_DIR / "static"
+INDEX_PATH = DASHBOARD_DIR / "index.html"
+DEFAULT_PORT = int(os.getenv("DASHBOARD_PORT", "8765"))
 
-INDEX_HTML = """<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<title>AI 智能体仪表盘</title>
-<style>
-body{font-family:"Microsoft YaHei UI",sans-serif;background:#f6f2ec;color:#3b302a;margin:0;padding:24px}
-h1{font-size:22px;margin:0 0 16px}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.card{background:#fffdf9;border:1px solid #e5ddd4;border-radius:8px;padding:14px}
-.card .v{font-size:22px;font-weight:700;margin-top:6px}
-.section{background:#fffdf9;border:1px solid #e5ddd4;border-radius:8px;padding:14px;margin-top:16px}
-pre{white-space:pre-wrap;font-size:13px;line-height:1.6;margin:0}
-</style>
-</head>
-<body>
-<h1>AI 智能体仪表盘</h1>
-<div class="cards" id="cards"></div>
-<div class="section"><b>最近对话</b><pre id="conversations"></pre></div>
-<div class="section"><b>最近模型调用</b><pre id="llm"></pre></div>
-<div class="section"><b>最近发布</b><pre id="publish"></pre></div>
-<script>
-async function get(path){const r=await fetch(path);return r.json()}
-function fmt(list){return list.map(x=>JSON.stringify(x)).join('\\n') || '暂无'}
-async function refresh(){
-  const s=await get('/api/summary');
-  document.getElementById('cards').innerHTML=
-    card('总 Token',s.total_tokens)+
-    card('今日对话',s.today_conversations)+
-    card('当前情绪',s.mood)+
-    card('模块状态',s.module+' / '+s.status);
-  document.getElementById('conversations').textContent=fmt(await get('/api/conversations?limit=5'));
-  document.getElementById('llm').textContent=fmt(await get('/api/llm_calls?limit=5'));
-  document.getElementById('publish').textContent=fmt(await get('/api/publish_tasks?limit=5'));
+CONTENT_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".woff2": "font/woff2",
 }
-function card(label,value){return '<div class="card"><div>'+label+'</div><div class="v">'+value+'</div></div>'}
-refresh();setInterval(refresh,15000);
-</script>
-</body>
-</html>"""
 
 
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self) -> None:
-        parsed = urllib.parse.urlparse(self.path)
-        query = urllib.parse.parse_qs(parsed.query)
-        limit = int(query.get("limit", ["10"])[0]) if query.get("limit") else 10
-        routes: dict[str, Any] = {
-            "/": INDEX_HTML,
-            "/index.html": INDEX_HTML,
-            "/api/summary": fetch_summary(DB),
-            "/api/conversations": fetch_conversations(DB, limit),
-            "/api/llm_calls": fetch_llm_calls(DB, limit),
-            "/api/emotions": fetch_emotions(DB, limit),
-            "/api/memory_stats": fetch_memory_stats(DB, limit),
-            "/api/publish_tasks": fetch_publish_tasks(DB, limit),
-        }
-        if parsed.path not in routes:
+def _query_int(raw: str | None, default: int = 50) -> int:
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def create_dashboard_server(
+    host: str = "127.0.0.1",
+    port: int = DEFAULT_PORT,
+    config: AgentConfig | None = None,
+    db_path: str | Path | None = None,
+) -> ThreadingHTTPServer:
+    config = config or AgentConfig.load(Path("config.json"))
+    db_path = Path(db_path) if db_path else _db_path(config)
+
+    class DashboardHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            parsed = urllib.parse.urlparse(self.path)
+            query = urllib.parse.parse_qs(parsed.query)
+            limit = _query_int((query.get("limit") or [None])[0])
+            level = (query.get("level") or [None])[0]
+            event_type = (query.get("type") or [None])[0]
+
+            routes: dict[str, Any] = {
+                "/api/summary": fetch_summary(db_path),
+                "/api/conversations": fetch_conversations(db_path, limit),
+                "/api/llm_calls": fetch_llm_calls(db_path, limit),
+                "/api/emotions": fetch_emotions(db_path, limit),
+                "/api/memory_stats": fetch_memory_stats(db_path, limit),
+                "/api/publish_tasks": fetch_publish_tasks(db_path, limit),
+                "/api/logs": fetch_logs(db_path, limit, level),
+                "/api/bus_events": fetch_bus_events(
+                    db_path, limit, event_type
+                ),
+                "/api/module_statuses": fetch_module_statuses(db_path),
+                "/api/config": public_config(config),
+            }
+            if parsed.path in routes:
+                self._send_json(routes[parsed.path])
+                return
+            if parsed.path in ("/", "/index.html"):
+                self._send_file(INDEX_PATH, CONTENT_TYPES[".html"])
+                return
+            if parsed.path.startswith("/static/"):
+                target = (STATIC_DIR / parsed.path[len("/static/") :]).resolve()
+                static_root = STATIC_DIR.resolve()
+                if (
+                    static_root not in target.parents
+                    or not target.is_file()
+                ):
+                    self.send_error(404)
+                    return
+                content_type = CONTENT_TYPES.get(
+                    target.suffix.lower(), "application/octet-stream"
+                )
+                self._send_file(target, content_type)
+                return
             self.send_error(404)
-            return
-        body = routes[parsed.path]
-        if parsed.path.startswith("/api/"):
-            raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
+
+        def _send_json(self, payload: Any) -> None:
+            raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(raw)))
             self.end_headers()
             self.wfile.write(raw)
-        else:
-            raw = body.encode("utf-8")
+
+        def _send_file(self, path: Path, content_type: str) -> None:
+            raw = path.read_bytes()
             self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(raw)))
             self.end_headers()
             self.wfile.write(raw)
 
-    def log_message(self, format: str, *args: Any) -> None:
-        return
+        def log_message(self, format: str, *args: Any) -> None:
+            return
+
+    return ThreadingHTTPServer((host, port), DashboardHandler)
 
 
 def main() -> None:
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"仪表盘地址：http://127.0.0.1:{PORT}")
+    port = int(os.getenv("DASHBOARD_PORT", str(DEFAULT_PORT)))
+    server = create_dashboard_server(port=port)
+    print(f"仪表盘地址：http://127.0.0.1:{port}")
     server.serve_forever()
 
 

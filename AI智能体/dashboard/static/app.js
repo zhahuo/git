@@ -2,25 +2,48 @@
   "use strict";
 
   var LIMIT = 50;
+  var DEBUG_LIMIT = 80;
   var charts = {};
+  var currentLogLevel = "";
 
   function el(id) {
     return document.getElementById(id);
   }
 
-  function api(name, arg) {
-    if (typeof window.pywebview === "undefined" || !window.pywebview.api) {
-      return Promise.reject(new Error("pywebview 未连接"));
+  function parseRaw(raw) {
+    if (typeof raw === "string") {
+      return JSON.parse(raw);
     }
-    var fn = window.pywebview.api[name];
-    if (typeof fn !== "function") {
-      return Promise.reject(new Error("接口不存在: " + name));
-    }
-    return Promise.resolve(arg === undefined ? fn() : fn(arg)).then(function (raw) {
-      if (typeof raw === "string") {
-        return JSON.parse(raw);
+    return raw;
+  }
+
+  function api(name, arg, extra) {
+    if (
+      typeof window.pywebview !== "undefined" &&
+      window.pywebview.api &&
+      typeof window.pywebview.api[name] === "function"
+    ) {
+      var fn = window.pywebview.api[name];
+      if (name === "get_logs" || name === "get_bus_events") {
+        return Promise.resolve(fn(arg === undefined ? null : arg, extra || null))
+          .then(parseRaw);
       }
-      return raw;
+      return Promise.resolve(arg === undefined ? fn() : fn(arg)).then(parseRaw);
+    }
+    var params = [];
+    if (arg !== undefined && arg !== null) {
+      params.push("limit=" + encodeURIComponent(arg));
+    }
+    if (extra) {
+      if (extra.level) params.push("level=" + encodeURIComponent(extra.level));
+      if (extra.type) params.push("type=" + encodeURIComponent(extra.type));
+    }
+    var qs = params.length ? "?" + params.join("&") : "";
+    return fetch("/api/" + name + qs).then(function (response) {
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+      return response.json();
     });
   }
 
@@ -42,7 +65,7 @@
   function statusClass(status) {
     var s = String(status || "").toLowerCase();
     if (["ok", "success", "正常", "running", "run"].indexOf(s) >= 0) return "ok";
-    if (["warn", "warning", "暂停", "paused", "idle"].indexOf(s) >= 0) return "warn";
+    if (["warn", "warning", "暂停", "paused", "idle", "疑似离线"].indexOf(s) >= 0) return "warn";
     if (["error", "fail", "失败", "异常", "stopped"].indexOf(s) >= 0) return "err";
     return "warn";
   }
@@ -250,6 +273,140 @@
     });
   }
 
+  function renderLogs(rows) {
+    var list = el("listLogs");
+    list.innerHTML = "";
+    if (!rows || rows.length === 0) {
+      list.innerHTML = '<li class="empty">暂无日志</li>';
+      return;
+    }
+    rows.forEach(function (row) {
+      var li = document.createElement("li");
+      li.className = "log-row";
+      var time = document.createElement("span");
+      time.className = "time";
+      time.textContent = fmtTime(row.created_at);
+      var level = document.createElement("span");
+      level.className = "status " + statusClass(row.level === "WARNING" ? "warn" : row.level === "ERROR" ? "err" : "ok");
+      level.textContent = row.level || "-";
+      var logger = document.createElement("span");
+      logger.className = "who mono";
+      logger.textContent = (row.logger || "-").split(".").pop();
+      var message = document.createElement("span");
+      message.className = "text";
+      message.textContent = row.message || "";
+      li.appendChild(time);
+      li.appendChild(level);
+      li.appendChild(logger);
+      li.appendChild(message);
+      list.appendChild(li);
+    });
+  }
+
+  function renderBusEvents(rows) {
+    var list = el("listEvents");
+    el("eventCount").textContent = (rows || []).length;
+    list.innerHTML = "";
+    if (!rows || rows.length === 0) {
+      list.innerHTML = '<li class="empty">暂无事件</li>';
+      return;
+    }
+    rows.forEach(function (row) {
+      var li = document.createElement("li");
+      li.className = "log-row";
+      var time = document.createElement("span");
+      time.className = "time";
+      time.textContent = fmtTime(row.created_at);
+      var type = document.createElement("span");
+      type.className = "status ok";
+      type.textContent = row.event_type || "-";
+      var payload = document.createElement("span");
+      payload.className = "text mono";
+      var parsed = null;
+      try {
+        parsed = JSON.parse(row.payload_json || "{}");
+      } catch (err) {
+        parsed = {};
+      }
+      var raw = JSON.stringify(parsed);
+      payload.textContent = raw.length > 160 ? raw.slice(0, 160) + "..." : raw;
+      li.appendChild(time);
+      li.appendChild(type);
+      li.appendChild(payload);
+      list.appendChild(li);
+    });
+  }
+
+  function renderModuleStatuses(rows) {
+    var box = el("moduleStatuses");
+    box.innerHTML = "";
+    if (!rows || rows.length === 0) {
+      box.innerHTML = '<div class="empty">暂无模块状态</div>';
+      return;
+    }
+    rows.forEach(function (row) {
+      var item = document.createElement("div");
+      item.className = "module-item";
+      var stale = false;
+      var time = new Date(row.created_at);
+      if (!isNaN(time.getTime()) && Date.now() - time.getTime() > 90000) {
+        stale = true;
+      }
+      var label = stale ? "疑似离线" : row.status || "未知";
+      var name = document.createElement("div");
+      name.className = "module-name mono";
+      name.textContent = row.module || "-";
+      var status = document.createElement("div");
+      status.className = "status " + (stale ? "warn" : statusClass(row.status));
+      status.textContent = label;
+      var detail = document.createElement("div");
+      detail.className = "module-detail";
+      detail.textContent = (row.detail || "") + " · " + fmtTime(row.created_at);
+      item.appendChild(name);
+      item.appendChild(status);
+      item.appendChild(detail);
+      box.appendChild(item);
+    });
+  }
+
+  function renderConfig(config) {
+    var list = el("configList");
+    list.innerHTML = "";
+    if (!config || Object.keys(config).length === 0) {
+      list.innerHTML = '<div class="empty">暂无配置</div>';
+      return;
+    }
+    var pairs = [
+      ["名称", config.name],
+      ["模型", config.model],
+      ["接口", config.base_url],
+      ["API Key", config.api_key],
+      ["Telegram", config.telegram_token],
+      ["搜索服务", config.search_provider],
+      ["搜索 Key", config.search_api_key],
+      ["微信启用", config.wechat_enabled ? "是" : "否"],
+      ["微信演示", config.wechat_dry_run ? "是" : "否"],
+      ["微信白名单", config.wechat_allowed_chats || "空"],
+      ["抖音 Key", config.douyin_client_key],
+      ["抖音 Secret", config.douyin_client_secret],
+      ["TikTok Key", config.tiktok_client_key],
+      ["TikTok Secret", config.tiktok_client_secret],
+      ["演示模式", config.dry_run ? "是" : "否"],
+      ["数据目录", config.data_dir],
+      ["犹豫区间", config.thinking_delay_min + " ~ " + config.thinking_delay_max + "s"],
+      ["分段回复", config.multi_reply_enabled ? "是" : "否"],
+      ["已启用模块", (config.enabled_modules || []).join(", ")]
+    ];
+    pairs.forEach(function (pair) {
+      var dt = document.createElement("dt");
+      dt.textContent = pair[0];
+      var dd = document.createElement("dd");
+      dd.textContent = String(pair[1] === undefined || pair[1] === null ? "" : pair[1]);
+      list.appendChild(dt);
+      list.appendChild(dd);
+    });
+  }
+
   function setConn(ok, message) {
     var state = el("connState");
     state.textContent = ok ? "已连接" : "离线";
@@ -294,7 +451,59 @@
       });
   }
 
+  function refreshDebug() {
+    api("get_logs", DEBUG_LIMIT, { level: currentLogLevel })
+      .then(renderLogs)
+      .then(function () {
+        return api("get_bus_events", DEBUG_LIMIT);
+      })
+      .then(renderBusEvents)
+      .then(function () {
+        return api("get_module_statuses");
+      })
+      .then(renderModuleStatuses)
+      .then(function () {
+        return api("get_config");
+      })
+      .then(renderConfig)
+      .catch(function (err) {
+        setConn(false, String(err && err.message ? err.message : err));
+      });
+  }
+
+  function switchView(name) {
+    document.querySelectorAll(".view").forEach(function (view) {
+      view.classList.toggle("active", view.id === "view" + name.charAt(0).toUpperCase() + name.slice(1));
+    });
+    document.querySelectorAll(".app-tab").forEach(function (tab) {
+      tab.classList.toggle("active", tab.getAttribute("data-view") === name);
+    });
+    if (name === "debug") {
+      refreshDebug();
+    } else {
+      Object.keys(charts).forEach(function (key) {
+        if (charts[key]) charts[key].resize();
+      });
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".app-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        switchView(tab.getAttribute("data-view"));
+      });
+    });
+
+    document.querySelectorAll("#logLevels .seg-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        currentLogLevel = btn.getAttribute("data-level") || "";
+        document.querySelectorAll("#logLevels .seg-btn").forEach(function (b) {
+          b.classList.toggle("active", b === btn);
+        });
+        refreshDebug();
+      });
+    });
+
     document.querySelectorAll(".tab").forEach(function (tab) {
       tab.addEventListener("click", function () {
         var name = tab.getAttribute("data-tab");
@@ -313,6 +522,8 @@
     });
 
     refresh();
+    refreshDebug();
     setInterval(refresh, 1000);
+    setInterval(refreshDebug, 3000);
   });
 })();

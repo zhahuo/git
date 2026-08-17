@@ -13,11 +13,13 @@ from .dashboard import DashboardModule
 from .module import Module
 from .services.chat_service import ChatService
 from .services.content_service import ContentService
+from .services.debug_service import DebugService
 from .services.emotion_service import EmotionService
 from .services.memory_service import MemoryService
 from .services.monitor_service import MonitorService
 from .services.publish_service import PublishService
 from .services.web_service import WebService
+from .services.wechat_service import WeChatService
 
 
 class BrainModule(Module):
@@ -133,12 +135,16 @@ def build_default_modules(
         modules.append(WebService(config))
     if "chat_service" in enabled:
         modules.append(ChatService(config, brain=brain))
+    if "wechat" in enabled:
+        modules.append(WeChatService(config, brain=brain))
     if "content" in enabled:
         modules.append(ContentService(config))
     if "publish" in enabled:
         modules.append(PublishService(config))
     if "monitor" in enabled:
         modules.append(MonitorService(config))
+    if "debug" in enabled:
+        modules.append(DebugService(config, modules=modules))
     if "dashboard" in enabled:
         modules.append(DashboardModule(config))
     return modules

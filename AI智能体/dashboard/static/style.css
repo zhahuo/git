@@ -310,3 +310,173 @@ footer {
     flex-basis: 66px;
   }
 }
+
+.app-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 10px 12px 0;
+}
+
+.app-tab {
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-tab:hover {
+  color: var(--text);
+  border-color: #39434f;
+}
+
+.app-tab.active {
+  border-color: rgba(53, 182, 161, 0.55);
+  background: rgba(53, 182, 161, 0.12);
+  color: var(--accent);
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.debug-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.debug-panel {
+  min-width: 0;
+  margin-bottom: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.seg {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.seg-btn {
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.seg-btn:hover {
+  color: var(--text);
+}
+
+.seg-btn.active {
+  border-color: rgba(53, 182, 161, 0.55);
+  background: rgba(53, 182, 161, 0.12);
+  color: var(--accent);
+}
+
+.debug-list {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.log-row {
+  align-items: flex-start;
+}
+
+.log-row .who,
+.log-row .text {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.module-item {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.module-name {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.module-detail {
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-list {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 5px 10px;
+  margin: 8px 0 0;
+}
+
+.config-list dt {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 10px;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .debug-grid {
+    grid-template-columns: 1fr;
+  }
+  .config-list {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .seg {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}

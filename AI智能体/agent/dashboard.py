@@ -138,6 +138,88 @@ def fetch_publish_tasks(db_path: Path | str, limit: int | None = None) -> list[d
     )
 
 
+def fetch_logs(
+    db_path: Path | str,
+    limit: int | None = None,
+    level: str | None = None,
+) -> list[dict[str, Any]]:
+    sql = "SELECT id, created_at, level, logger, message FROM logs"
+    params: list[Any] = []
+    if level:
+        sql += " WHERE level = ?"
+        params.append(str(level).upper())
+    sql += " ORDER BY created_at DESC, id DESC LIMIT ?"
+    params.append(_clamp_limit(limit))
+    return _query(db_path, sql, tuple(params))
+
+
+def fetch_bus_events(
+    db_path: Path | str,
+    limit: int | None = None,
+    event_type: str | None = None,
+) -> list[dict[str, Any]]:
+    sql = "SELECT id, created_at, event_type, payload_json FROM bus_events"
+    params: list[Any] = []
+    if event_type:
+        sql += " WHERE event_type = ?"
+        params.append(str(event_type))
+    sql += " ORDER BY created_at DESC, id DESC LIMIT ?"
+    params.append(_clamp_limit(limit))
+    return _query(db_path, sql, tuple(params))
+
+
+def fetch_module_statuses(db_path: Path | str) -> list[dict[str, Any]]:
+    return _query(
+        db_path,
+        "SELECT module, status, detail, created_at FROM module_status "
+        "ORDER BY module",
+    )
+
+
+def _mask_secret(value: Any) -> str:
+    return "已配置" if value else "未配置"
+
+
+def public_config(config: Any) -> dict[str, Any]:
+    """返回适合调试面板展示的非敏感配置，密钥只保留状态。"""
+    return {
+        "name": getattr(config, "name", ""),
+        "persona": getattr(config, "persona", ""),
+        "model": getattr(config, "model", ""),
+        "base_url": getattr(config, "base_url", ""),
+        "api_key": _mask_secret(getattr(config, "api_key", "")),
+        "telegram_token": _mask_secret(getattr(config, "telegram_token", "")),
+        "search_provider": getattr(config, "search_provider", ""),
+        "search_api_key": _mask_secret(getattr(config, "search_api_key", "")),
+        "wechat_enabled": bool(getattr(config, "wechat_enabled", False)),
+        "wechat_dry_run": bool(getattr(config, "wechat_dry_run", True)),
+        "wechat_allowed_chats": str(
+            getattr(config, "wechat_allowed_chats", "") or ""
+        ),
+        "douyin_client_key": _mask_secret(
+            getattr(config, "douyin_client_key", "")
+        ),
+        "douyin_client_secret": _mask_secret(
+            getattr(config, "douyin_client_secret", "")
+        ),
+        "tiktok_client_key": _mask_secret(
+            getattr(config, "tiktok_client_key", "")
+        ),
+        "tiktok_client_secret": _mask_secret(
+            getattr(config, "tiktok_client_secret", "")
+        ),
+        "data_dir": str(getattr(config, "data_dir", "")),
+        "dry_run": bool(getattr(config, "dry_run", True)),
+        "thinking_delay_min": getattr(config, "thinking_delay_min", 0),
+        "thinking_delay_max": getattr(config, "thinking_delay_max", 0),
+        "message_delay": getattr(config, "message_delay", 0),
+        "multi_reply_enabled": bool(
+            getattr(config, "multi_reply_enabled", True)
+        ),
+        "enabled_modules": list(getattr(config, "enabled_modules", ())),
+    }
+
+
 class DashboardModule(Module):
     """桌面悬浮窗仪表盘，读取 data/monitor.db 并实时展示。"""
 
@@ -150,7 +232,7 @@ class DashboardModule(Module):
         self._gui_thread: threading.Thread | None = None
 
     def _api(self) -> "DashboardApi":
-        return DashboardApi(self.db_path)
+        return DashboardApi(self.db_path, self.config)
 
     async def start(self) -> None:
         if not PYWEBVIEW_AVAILABLE:
@@ -163,13 +245,12 @@ class DashboardModule(Module):
         api = self._api()
 
         def _run_gui() -> None:
+            original_signal = signal.signal
             try:
                 # pywebview 按线程名检查主线程；在后台线程运行 GUI 循环以配合 asyncio 运行器。
                 threading.current_thread().name = "MainThread"
                 # winforms 后端在非主线程注册 Ctrl+C 信号处理器会失败；窗口显示不受影响。
                 if threading.current_thread() is not threading.main_thread():
-                    original_signal = signal.signal
-
                     def _noop_signal(signum: int, handler: Any) -> Any:
                         return handler
 
@@ -220,8 +301,9 @@ class DashboardModule(Module):
 class DashboardApi:
     """pywebview js_api：前端轮询时调用的数据接口。"""
 
-    def __init__(self, db_path: Path | str) -> None:
+    def __init__(self, db_path: Path | str, config: Any = None) -> None:
         self.db_path = Path(db_path)
+        self.config = config
 
     def get_summary(self) -> str:
         return json.dumps(fetch_summary(self.db_path), ensure_ascii=False)
@@ -240,3 +322,31 @@ class DashboardApi:
 
     def get_publish_tasks(self, limit: int | None = None) -> str:
         return json.dumps(fetch_publish_tasks(self.db_path, limit), ensure_ascii=False)
+
+    def get_logs(self, limit: int | None = None, level: str | None = None) -> str:
+        return json.dumps(
+            fetch_logs(self.db_path, limit, level),
+            ensure_ascii=False,
+        )
+
+    def get_bus_events(
+        self,
+        limit: int | None = None,
+        event_type: str | None = None,
+    ) -> str:
+        return json.dumps(
+            fetch_bus_events(self.db_path, limit, event_type),
+            ensure_ascii=False,
+        )
+
+    def get_module_statuses(self) -> str:
+        return json.dumps(
+            fetch_module_statuses(self.db_path),
+            ensure_ascii=False,
+        )
+
+    def get_config(self) -> str:
+        return json.dumps(
+            public_config(self.config) if self.config is not None else {},
+            ensure_ascii=False,
+        )

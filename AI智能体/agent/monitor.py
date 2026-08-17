@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 import threading
 from datetime import datetime, timedelta, timezone
@@ -15,6 +16,9 @@ _TABLES = (
     "emotions",
     "memory_stats",
     "publish_tasks",
+    "logs",
+    "bus_events",
+    "module_status",
 )
 
 
@@ -34,6 +38,11 @@ def _to_float(value: Any, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _truncate(value: str, limit: int = 2000) -> str:
+    text = str(value)
+    return text if len(text) <= limit else text[:limit]
 
 
 class MonitorStore:
@@ -97,6 +106,25 @@ class MonitorStore:
                     platform TEXT NOT NULL,
                     title TEXT NOT NULL,
                     status TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    created_at TEXT NOT NULL,
+                    level TEXT NOT NULL,
+                    logger TEXT NOT NULL,
+                    message TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS bus_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    created_at TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    payload_json TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS module_status (
+                    module TEXT PRIMARY KEY,
+                    status TEXT NOT NULL,
+                    detail TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL
                 );
                 """
             )
@@ -227,6 +255,72 @@ class MonitorStore:
             self._conn.commit()
             return int(cursor.lastrowid)
 
+    def record_log(
+        self,
+        level: str,
+        logger: str,
+        message: str,
+        created_at: str | None = None,
+    ) -> int:
+        with self._lock:
+            cursor = self._conn.execute(
+                "INSERT INTO logs (created_at, level, logger, message) "
+                "VALUES (?, ?, ?, ?)",
+                (
+                    created_at or _now_iso(),
+                    str(level),
+                    str(logger),
+                    _truncate(message),
+                ),
+            )
+            self._conn.commit()
+            return int(cursor.lastrowid)
+
+    def record_event(
+        self,
+        event_type: str,
+        payload: dict[str, Any] | None = None,
+        created_at: str | None = None,
+    ) -> int:
+        with self._lock:
+            cursor = self._conn.execute(
+                "INSERT INTO bus_events (created_at, event_type, payload_json) "
+                "VALUES (?, ?, ?)",
+                (
+                    created_at or _now_iso(),
+                    str(event_type),
+                    _truncate(
+                        json.dumps(payload or {}, ensure_ascii=False, default=str)
+                    ),
+                ),
+            )
+            self._conn.commit()
+            return int(cursor.lastrowid)
+
+    def upsert_module_status(
+        self,
+        module: str,
+        status: str,
+        detail: str = "",
+        created_at: str | None = None,
+    ) -> None:
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO module_status (module, status, detail, created_at) "
+                "VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(module) DO UPDATE SET "
+                "status = excluded.status, "
+                "detail = excluded.detail, "
+                "created_at = excluded.created_at",
+                (
+                    str(module),
+                    str(status),
+                    _truncate(detail, limit=500),
+                    created_at or _now_iso(),
+                ),
+            )
+            self._conn.commit()
+
     def summary(self, hours: int = 24) -> dict[str, Any]:
         hours = max(0, _to_int(hours))
         cutoff = (
@@ -257,6 +351,9 @@ class MonitorStore:
                 "emotions": self._count("emotions", cutoff),
                 "memory_stats": self._count("memory_stats", cutoff),
                 "publish_tasks": self._count("publish_tasks", cutoff),
+                "logs": self._count("logs", cutoff),
+                "bus_events": self._count("bus_events", cutoff),
+                "module_statuses": self._count("module_status", cutoff),
             }
         return result
 

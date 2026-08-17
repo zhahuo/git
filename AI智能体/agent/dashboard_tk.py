@@ -8,12 +8,16 @@ from typing import Any
 
 from .dashboard import (
     _db_path,
+    fetch_bus_events,
     fetch_conversations,
     fetch_emotions,
     fetch_llm_calls,
+    fetch_logs,
     fetch_memory_stats,
+    fetch_module_statuses,
     fetch_publish_tasks,
     fetch_summary,
+    public_config,
 )
 
 BG = "#f6f2ec"
@@ -26,9 +30,10 @@ MEMORY = "#7b6a9f"
 
 
 class DashboardTk:
-    def __init__(self, root: tk.Tk, db_path: Path) -> None:
+    def __init__(self, root: tk.Tk, db_path: Path, config: Any = None) -> None:
         self.root = root
         self.db_path = db_path
+        self.config = config
         self.root.title("AI 智能体仪表盘")
         self.root.geometry("480x760+120+120")
         self.root.attributes("-topmost", True)
@@ -116,6 +121,10 @@ class DashboardTk:
             ("conversations", "最近对话"),
             ("llm", "模型调用"),
             ("publish", "发布任务"),
+            ("logs", "调试日志"),
+            ("events", "事件总线"),
+            ("statuses", "模块状态"),
+            ("config", "配置概览"),
         ):
             page = tk.Frame(notebook, bg=CARD_BG)
             notebook.add(page, text=title)
@@ -145,6 +154,7 @@ class DashboardTk:
         self._draw_chart("emotions", [row.get("valence") or 0 for row in fetch_emotions(self.db_path, 60)[::-1]], EMOTION)
         self._draw_chart("memory", [row.get("conversations") or 0 for row in fetch_memory_stats(self.db_path, 60)[::-1]], MEMORY)
         self._fill_texts()
+        self._fill_debug_texts()
         seconds = float(os.getenv("DASHBOARD_REFRESH_SECONDS", "15") or "15")
         self.root.after(max(1000, int(seconds * 1000)), self.refresh)
 
@@ -204,6 +214,55 @@ class DashboardTk:
             )
         return "\n\n".join(lines) or "暂无发布任务"
 
+    def _fill_debug_texts(self) -> None:
+        logs = fetch_logs(self.db_path, 30)
+        events = fetch_bus_events(self.db_path, 30)
+        statuses = fetch_module_statuses(self.db_path)
+        config = public_config(self.config) if self.config is not None else {}
+        self._set_text("logs", self._format_logs(logs))
+        self._set_text("events", self._format_events(events))
+        self._set_text("statuses", self._format_statuses(statuses))
+        self._set_text("config", self._format_config(config))
+
+    @staticmethod
+    def _format_logs(rows: list[dict[str, Any]]) -> str:
+        lines = []
+        for row in rows:
+            lines.append(
+                f"[{row.get('level')}] {row.get('logger')}\n{row.get('message')}"
+            )
+        return "\n\n".join(lines) or "暂无日志"
+
+    @staticmethod
+    def _format_events(rows: list[dict[str, Any]]) -> str:
+        lines = []
+        for row in rows:
+            payload = row.get("payload_json") or "{}"
+            lines.append(f"{row.get('event_type')}  {payload[:160]}")
+        return "\n\n".join(lines) or "暂无事件"
+
+    @staticmethod
+    def _format_statuses(rows: list[dict[str, Any]]) -> str:
+        lines = []
+        for row in rows:
+            lines.append(
+                f"{row.get('module')} [{row.get('status')}]\n"
+                f"{row.get('detail')} · {row.get('created_at')}"
+            )
+        return "\n\n".join(lines) or "暂无模块状态"
+
+    @staticmethod
+    def _format_config(config: dict[str, Any]) -> str:
+        if not config:
+            return "暂无配置"
+        lines = []
+        for key, value in config.items():
+            text = str(value)
+            if isinstance(value, (list, tuple)):
+                text = ", ".join(str(item) for item in value)
+            lines.append(f"{key} = {text}")
+        return "\n".join(lines)
+
     def _set_text(self, key: str, content: str) -> None:
         text = self.texts[key]
         text.configure(state="normal")
@@ -214,5 +273,5 @@ class DashboardTk:
 
 def run_dashboard(config: Any) -> None:
     root = tk.Tk()
-    DashboardTk(root, _db_path(config))
+    DashboardTk(root, _db_path(config), config)
     root.mainloop()

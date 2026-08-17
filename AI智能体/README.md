@@ -55,6 +55,18 @@ python -m agent --channel console
 - `WEB_WATCH_QUERIES`：联网服务定时关注的搜索词，逗号分隔。
 - `CONTENT_SCHEDULE_MINUTES`：内容自动生成间隔，默认 1440 分钟。
 
+## 监控与调试面板
+
+后台默认包含 `monitor` 和 `debug` 模块，实时数据写入 `data/monitor.db`：
+
+- 网页版：`python -m scripts.serve_dashboard`，浏览器打开 `http://127.0.0.1:8765`。
+- 悬浮窗：`python -m scripts.open_dashboard`，或启动后台时自动带 pywebview 悬浮窗。
+- 监控页：Token、今日对话、情绪、模块状态，以及 Token/情绪/记忆趋势、最近对话、模型调用、发布任务。
+- 调试页：实时日志流（可过滤级别）、事件总线记录、模块运行状态、非敏感配置概览。
+- 刷新间隔：监控页 1 秒，调试页 3 秒；Tk 悬浮窗通过 `DASHBOARD_REFRESH_SECONDS` 调整。
+
+调试数据保留 30 天，由 `MONITOR_CLEANUP_DAYS` 控制；密钥和 Token 在面板中只显示“已配置/未配置”。
+
 ## 启动 Telegram 机器人
 
 ```bash
