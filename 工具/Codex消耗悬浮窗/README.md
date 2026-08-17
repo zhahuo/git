@@ -11,11 +11,18 @@
 
 ## 启动
 
-双击 `start.cmd`，或手动运行：
+双击 `start.cmd` 会启动桥接器：检测到 Codex 运行时自动打开悬浮窗，Codex 退出时自动关闭。
+
+也可以手动直接运行悬浮窗：
 
 ```text
 C:\Users\袁\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe codex_cost_widget.py
 ```
+
+## 与 Codex 同步
+
+- `codex_bridge.py` 负责绑定 Codex 生命周期：Codex 启动才显示悬浮窗，Codex 退出就关闭。
+- 想让悬浮窗随登录自动待命，双击 `install-autostart.cmd` 即可；桥接器会一直等待 Codex 出现。
 
 ## 数据来源
 
