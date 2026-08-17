@@ -270,6 +270,7 @@ def main():
     global root
     try:
         root = tk.Tk()
+        root.title("小鲸鱼消耗")
         CostWidget(root)
         root.mainloop()
     except Exception as exc:

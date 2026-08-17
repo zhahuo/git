@@ -41,6 +41,7 @@ def is_codex_running():
             capture_output=True,
             text=True,
             timeout=5,
+            creationflags=subprocess.CREATE_NO_WINDOW,
         ).stdout
         return "codex.exe" in output.lower()
     except Exception:

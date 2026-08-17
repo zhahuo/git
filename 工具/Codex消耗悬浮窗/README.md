@@ -23,6 +23,7 @@ C:\Users\袁\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\pyt
 
 - `codex_bridge.py` 负责绑定 Codex 生命周期：Codex 启动才显示悬浮窗，Codex 退出就关闭。
 - 悬浮窗被关闭或异常退出时，桥接器会自动重新拉起。
+- 桥接器和悬浮窗都以无窗口方式运行，不会反复弹出终端。
 - 想让悬浮窗随登录自动待命，双击 `install-autostart.cmd` 即可；桥接器会一直等待 Codex 出现。
 
 ## 数据来源
